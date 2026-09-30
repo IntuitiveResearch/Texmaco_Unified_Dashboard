@@ -76,16 +76,27 @@ function unifiedApiProxyPlugin(): Plugin {
       const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const compressorParam = urlObj.searchParams.get('compressor') || '';
       const pkParam = urlObj.searchParams.get('pk') || '';
-      const isCnc =
-        isTestRoute ||
-        pkParam.includes('MACHINE') ||
-        pkParam.includes('CNC') ||
-        compressorParam === 'CNC#01' ||
-        compressorParam === 'CNC01' ||
-        compressorParam.includes('MACHINE') ||
-        compressorParam.includes('TXMCNCI');
+      const isRobo =
+        pkParam.includes('TXMMIGI') ||
+        pkParam.includes('ROBO') ||
+        compressorParam.includes('TXMMIGI') ||
+        compressorParam === 'ROBO#01' ||
+        compressorParam === 'ROBO01';
 
+      const ROBO_PK = 'MACHINE#PI4G/TXMMIGI/26001';
       const CNC_PK = 'MACHINE#PI4G/TXMCNCI/26001';
+
+      const isCnc =
+        !isRobo && (
+          isTestRoute ||
+          pkParam.includes('TXMCNCI') ||
+          pkParam.includes('CNC') ||
+          compressorParam === 'CNC#01' ||
+          compressorParam === 'CNC01' ||
+          compressorParam.includes('TXMCNCI') ||
+          pkParam.includes('MACHINE') ||
+          compressorParam.includes('MACHINE')
+        );
 
       try {
         const endpoint = isKpi
@@ -97,7 +108,15 @@ function unifiedApiProxyPlugin(): Plugin {
           targetUrl.searchParams.set(key, val);
         });
 
-        if (isCnc) {
+        if (isRobo) {
+          if (isKpi) {
+            targetUrl.searchParams.set('compressor', ROBO_PK);
+            targetUrl.searchParams.delete('pk');
+          } else {
+            targetUrl.searchParams.set('pk', pkParam || ROBO_PK);
+            targetUrl.searchParams.delete('compressor');
+          }
+        } else if (isCnc) {
           if (isKpi) {
             targetUrl.searchParams.set('compressor', CNC_PK);
             targetUrl.searchParams.delete('pk');

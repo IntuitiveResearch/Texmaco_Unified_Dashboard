@@ -10,14 +10,13 @@ import {
 } from 'lucide-react';
 import intuitiveRoboticsLogo from '../assets/intuitive-robotics-logo.png';
 
-export type DashboardTab = 'om' | 'management' | 'finance' | 'weldwise' | 'reports';
+export type DashboardTab = 'om' | 'management' | 'finance' | 'reports';
 
 interface SidebarProps {
   currentTab: DashboardTab;
   onSelectTab: (tab: DashboardTab) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  roboticWelding?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -25,17 +24,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   isCollapsed,
   onToggleCollapse,
-  roboticWelding = false,
 }) => {
-  const isWeldingView = currentTab === 'weldwise' || roboticWelding;
   const navItems = [
-    {
-      id: 'weldwise' as DashboardTab,
-      label: 'WeldWise Dashboard',
-      shortLabel: 'WeldWise',
-      icon: Zap,
-      badge: null,
-    },
     {
       id: 'om' as DashboardTab,
       label: 'O&M Dashboard',
@@ -70,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside
       className={`${
         isCollapsed ? 'w-16' : 'w-48 lg:w-52'
-      } ${isWeldingView ? 'weldwise-sidebar' : ''} bg-[#061431] border-r border-[#0d224d] flex flex-col justify-between shrink-0 select-none h-screen sticky top-0 z-40 text-white transition-all duration-200 ease-in-out`}
+      } bg-[#061431] border-r border-[#0d224d] flex flex-col justify-between shrink-0 select-none h-screen sticky top-0 z-40 text-white transition-all duration-200 ease-in-out`}
     >
       {/* Top Section: Logo & Collapsible Header */}
       <div>
@@ -170,18 +160,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Bottom Section: Industrial Graphic & Mission Slogan */}
       {!isCollapsed && (
         <div className="sidebar-footer relative overflow-hidden p-3 pt-2 border-t border-white/10 transition-opacity duration-150">
-          {isWeldingView && (
-            <svg className="ww-sidebar-robot" viewBox="0 0 200 210" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-              <path d="M8 184 123 125 193 153 78 210M8 193 78 201 193 145M20 174l98-49 75 29M32 173v-20h45v20M37 152l6-52M69 152l6-49M47 80l48-43M61 93l45-43M116 45l31 33M127 34l31 35M155 77l14 16 8-4 6 14-4 6-11-13-7 2-14-19" />
-              <circle cx="56" cy="92" r="19" /><circle cx="56" cy="92" r="14" />
-              <circle cx="114" cy="33" r="18" /><circle cx="114" cy="33" r="13" />
-              <circle cx="57" cy="155" r="17" /><circle cx="57" cy="155" r="12" />
-              <circle cx="153" cy="75" r="9" />
-              <path d="M48 108l-4 31M69 109l-4 31M96 48l-32 29M129 46l14 16M83 157l56-28h38M43 174h38M166 120l4-8M174 121l7-3M178 128h9M172 132l4 7M163 131l-5 6M157 124l-8-1M164 118l-3-7M24 193l35-17M91 183l82-42" />
-            </svg>
-          )}
           {/* Subtle Refinery / Plant Skyline Watermark */}
-          <div className={`absolute -bottom-2 -left-2 opacity-15 pointer-events-none text-blue-200 ${isWeldingView ? 'hidden' : ''}`}>
+          <div className="absolute -bottom-2 -left-2 opacity-15 pointer-events-none text-blue-200">
             <svg width="180" height="110" viewBox="0 0 200 120" fill="currentColor">
               <rect x="10" y="50" width="14" height="70" rx="2" />
               <rect x="28" y="30" width="18" height="90" rx="3" />
@@ -200,9 +180,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           <div className="relative z-10 space-y-0.5">
-            <p className="text-[11px] 2xl:text-xs text-slate-300 font-medium">{isWeldingView ? 'Smarter Welding' : 'More Uptime'}</p>
+            <p className="text-[11px] 2xl:text-xs text-slate-300 font-medium">More Uptime</p>
             <p className="text-[11px] 2xl:text-xs text-slate-300 font-medium">Higher Productivity</p>
-            <p className="text-[11px] 2xl:text-xs text-slate-300 font-medium">{isWeldingView ? 'Better Quality' : 'A Sustainable Tomorrow'}</p>
+            <p className="text-[11px] 2xl:text-xs text-slate-300 font-medium">A Sustainable Tomorrow</p>
           </div>
         </div>
       )}

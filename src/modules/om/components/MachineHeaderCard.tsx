@@ -35,11 +35,18 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
   const imageUrl = getCompressorImage(compressorId);
   const status = getAssetStatusAppearance(getOperatingStatus(runState, loadState, compressorId));
   const displayName = getAssetDisplayName(compressorId);
+  const isRobo =
+    compressorId === 'ROBO#01' ||
+    compressorId === 'ROBO01' ||
+    compressorId?.toUpperCase()?.includes('ROBO') ||
+    compressorId?.includes('TXMMIGI');
   const isCnc =
-    compressorId === 'CNC#01' ||
-    compressorId === 'CNC01' ||
-    compressorId?.toUpperCase()?.includes('CNC') ||
-    compressorId?.includes('TXMCNCI');
+    !isRobo && (
+      compressorId === 'CNC#01' ||
+      compressorId === 'CNC01' ||
+      compressorId?.toUpperCase()?.includes('CNC') ||
+      compressorId?.includes('TXMCNCI')
+    );
 
   // Format timestamp cleanly
   const formattedDate = lastUpdate
@@ -48,7 +55,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
 
   return (
     <div className={`bg-white dark:bg-[#0c1f48] rounded-xl border border-slate-200/90 dark:border-slate-800 p-1.5 sm:p-2 shadow-2xs flex flex-col sm:flex-row items-stretch gap-2 h-full ${className}`}>
-      {/* Compressor Image Container */}
+      {/* Compressor / Machine Image Container */}
       <div className="relative w-full sm:w-28 md:w-36 shrink-0 h-24 sm:h-auto rounded-lg overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
         <img
           src={imageUrl}
@@ -56,7 +63,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
           className="w-full h-full object-cover object-center"
         />
         <div className="absolute bottom-1 right-1 bg-slate-900/80 backdrop-blur-xs text-[9px] text-white px-1.5 py-0.2 rounded font-mono">
-          {isCnc ? 'Duce Pack Cutter' : COMPRESSOR_MODEL}
+          {isRobo ? 'PI4G/TXMMIGI/26001' : isCnc ? 'Duce Pack Cutter' : COMPRESSOR_MODEL}
         </div>
       </div>
 
@@ -64,12 +71,17 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
       <div className="flex-1 w-full flex flex-col justify-between py-0.2 min-w-0">
         <div>
           {/* Top Status Pill & Asset ID */}
-          <div className="flex items-center gap-1.5 mb-0.5">
+          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
             <span
               className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider shadow-2xs ${status.pillClass}`}
             >
               {status.label.toUpperCase()}
             </span>
+            {isRobo && (
+              <span className="text-[8px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
+                LIVE CLOUD TELEMETRY
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -90,7 +102,11 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
           <p className="text-[10px] sm:text-[10.5px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1 mt-0.5 truncate">
             <span className="text-emerald-500 font-bold">●</span>
             <span className="truncate">
-              {isCnc ? 'Duce Pack Cutter · Precision CNC System' : `Atlas Copco ${COMPRESSOR_MODEL} Air Compressor`}
+              {isRobo
+                ? 'GMAW (MAG) · Robotic Welding System'
+                : isCnc
+                ? 'Duce Pack Cutter · Precision CNC System'
+                : `Atlas Copco ${COMPRESSOR_MODEL} Air Compressor`}
             </span>
           </p>
         </div>
@@ -109,7 +125,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
             <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
             <span className="text-slate-500 dark:text-slate-400 text-[10px]">Location:</span>
             <span className="text-slate-800 dark:text-slate-200 font-semibold truncate">
-              {isCnc ? 'CNC Machining Bay' : 'Compressor Room 1'}
+              {isRobo || isCnc ? 'CNC Machining Bay' : 'Compressor Room 1'}
             </span>
           </div>
 
@@ -117,7 +133,9 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
             <div className="flex items-center gap-1.5">
               <Tag className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="text-slate-500 text-[10px]">Asset Tag:</span>
-              <span className="text-slate-800 font-semibold">{compressorId}</span>
+              <span className="text-slate-800 font-semibold truncate">
+                {isRobo ? 'MACHINE#PI4G/TXMMIGI/26001' : compressorId}
+              </span>
             </div>
           )}
 

@@ -26,6 +26,7 @@ import {
 import cmp01Img from './assets/CMP01.jpeg';
 import cmp02Img from './assets/CMP02.jpeg';
 import cnc01Img from './assets/CNC01.jpeg';
+import robo01Img from '../../assets/weldwise-robotic-cell.jpg';
 import { MachineHeaderCard } from '../om/components/MachineHeaderCard';
 
 import { HeatingCoolingChart } from './components/charts/HeatingCoolingChart';
@@ -42,6 +43,8 @@ type ExpandedChartKey = 'utilization' | 'availability' | 'thermal' | 'interrupts
 
 const CNC_ASSET_LABEL = 'CNC#01';
 const CNC_API_COMPRESSOR = 'MACHINE#PI4G/TXMCNCI/26001';
+const ROBO_ASSET_LABEL = 'ROBO#01';
+const ROBO_API_COMPRESSOR = 'MACHINE#PI4G/TXMMIGI/26001';
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
 const toFiniteNumber = (value: unknown): number => {
@@ -162,9 +165,11 @@ const PLANT_ID_MAP: Record<string, string> = {
   'CMP#01': '011885',
   'CMP#02': '011884',
   'CNC#01': 'CN60I1626089',
+  'ROBO#01': 'PI4G/TXMMIGI/26001',
   'CMP01': '011885',
   'CMP02': '011884',
   'CNC01': 'CN60I1626089',
+  'ROBO01': 'PI4G/TXMMIGI/26001',
 };
 
 const ASSET_IMAGE_MAP: Record<string, string> = {
@@ -174,6 +179,8 @@ const ASSET_IMAGE_MAP: Record<string, string> = {
   'CMP02': cmp02Img,
   'CNC#01': cnc01Img,
   'CNC01': cnc01Img,
+  'ROBO#01': robo01Img,
+  'ROBO01': robo01Img,
 };
 
 export interface ManagementDashboardRef {
@@ -262,8 +269,13 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
       }
     }, [datePreset, customStartDate, customEndDate]);
 
-    const isCncAsset = compressor === CNC_ASSET_LABEL;
-    const requestCompressor = isCncAsset ? CNC_API_COMPRESSOR : compressor;
+    const isRoboAsset = compressor === ROBO_ASSET_LABEL || compressor.includes('ROBO');
+    const isCncAsset = compressor === CNC_ASSET_LABEL || compressor.includes('CNC');
+    const requestCompressor = isRoboAsset
+      ? ROBO_API_COMPRESSOR
+      : isCncAsset
+      ? CNC_API_COMPRESSOR
+      : compressor;
 
     const loadData = async (forceRefresh = false) => {
       // Fast switch: check cache immediately to avoid spinner and latency

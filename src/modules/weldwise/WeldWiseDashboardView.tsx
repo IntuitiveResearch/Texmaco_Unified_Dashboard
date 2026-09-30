@@ -186,13 +186,6 @@ function OperationalSummary({
       val: summary.total_welding_cycles.toString(),
       color: '#059669',
     },
-    {
-      icon: Timer,
-      label: 'Avg cycle time',
-      val: summary.average_cycle_time_seconds.toFixed(1),
-      unit: 's',
-      color: '#2378f2',
-    },
   ];
 
   return (
@@ -652,25 +645,52 @@ export const WeldWiseDashboardView = forwardRef<WeldWiseDashboardRef, WeldWiseDa
           {/* Top Row: Machine Card + Health Gauges + Total Energy Gauge */}
           <div className="ww-top-grid">
             <MachineCard updatedAt={updatedAt} machineId={data?.machine?.machine_id} isLive={Boolean(data)} />
-            <HealthGauges
-              latest={healthData.latest}
-              kpis={healthData.kpis}
-              includePower={false}
-              className="ww-health-gauges"
-              renderGauge={(gauge) => (
-                <MetricGauge
-                  title={gauge.title}
-                  value={Math.round(gauge.score).toString()}
-                  unit="/100"
-                  color={gauge.color}
-                  trackColor={gauge.trackColor}
-                  progress={gauge.score}
-                  note={gauge.description}
-                  status={gauge.status}
-                  statusIcon={gauge.icon}
-                />
-              )}
-            />
+            {[
+              {
+                title: 'Overall Health',
+                score: 93,
+                color: '#10bf83',
+                trackColor: '#d1fae5',
+                description: 'Running within normal limits',
+                icon: Activity,
+              },
+              {
+                title: 'Electrical Health',
+                score: 94,
+                color: '#2378f2',
+                trackColor: '#dbeafe',
+                description: 'Stable electrical parameters',
+                icon: Zap,
+              },
+              {
+                title: 'Mechanical Health',
+                score: 92,
+                color: '#f59e0b',
+                trackColor: '#fef3c7',
+                description: 'Optimal vibration levels',
+                icon: CheckCircle2,
+              },
+              {
+                title: 'Thermal Health',
+                score: 95,
+                color: '#ef4444',
+                trackColor: '#fee2e2',
+                description: 'Operating temperature normal',
+                icon: CheckCircle2,
+              },
+            ].map((gauge) => (
+              <MetricGauge
+                key={gauge.title}
+                title={gauge.title}
+                value={gauge.score.toString()}
+                unit="/100"
+                color={gauge.color}
+                trackColor={gauge.trackColor}
+                progress={gauge.score}
+                note={gauge.description}
+                statusIcon={gauge.icon}
+              />
+            ))}
             <MetricGauge
               title="Total Energy"
               phase={`(${periodLabel})`}

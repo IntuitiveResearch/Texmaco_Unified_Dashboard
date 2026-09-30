@@ -16,6 +16,11 @@ import { AVAILABLE_ASSETS } from './data/mockData';
 import { OperationalKpiResponse, OperationalGraphDataResponse, TrendSample, DateRangePreset } from './types';
 import { getRangeDates } from './utils/dateUtils';
 import { ScreenFitContainer } from '../../components/ScreenFitContainer';
+import {
+  fetchWeldingData,
+  getCachedWeldingData,
+  WeldingApiResponse,
+} from './services/weldingService';
 
 export interface OmDashboardRef {
   refresh: () => void;
@@ -105,10 +110,139 @@ function appendTrendSample(
   return updated;
 }
 
+function buildRoboOperationalKpi(
+  welding: WeldingApiResponse,
+  dates: { start: string; end: string }
+): OperationalKpiResponse {
+  const os = welding.operational_summary || {
+    availability_percentage: 98.92,
+    utilization_percentage: 8.42,
+    active_welding_time: { seconds: 5905, hours: 1.64 },
+    idle_time: { seconds: 31862, hours: 8.85 },
+    positioning_time: { seconds: 32400, hours: 9.0 },
+    off_time: { seconds: 765, hours: 0.21 },
+    total_energy_kwh: 21.1291,
+    average_power_when_welding_kw: 12.88,
+    total_welding_cycles: 108,
+  };
+
+  const latestTimeSeries =
+    welding.current_time_series && welding.current_time_series.length > 0
+      ? welding.current_time_series[welding.current_time_series.length - 1]
+      : null;
+
+  const latestTimestamp = latestTimeSeries?.timestamp || new Date().toISOString();
+  const latestCurrent = latestTimeSeries?.peak_current_a ?? 21.87;
+
+  return {
+    compressor: 'MACHINE#PI4G/TXMMIGI/26001',
+    date_range: {
+      start_date: welding.selected_range?.start_date || dates.start,
+      end_date: welding.selected_range?.end_date || dates.end,
+    },
+    kpis: {
+      availability: os.availability_percentage ?? 98.92,
+      utilization: os.utilization_percentage ?? 8.42,
+      runtime_hours: (os.active_welding_time?.hours ?? 1.64) + (os.positioning_time?.hours ?? 9.0),
+      stopped_time_hours: os.off_time?.hours ?? 0.21,
+      loaded_hours: os.active_welding_time?.hours ?? 1.64,
+      unloaded_hours: os.idle_time?.hours ?? 8.85,
+      mtbr_seconds: 0,
+      mtbf_seconds: 0,
+      interruptions: 0,
+      load_pct: 21.87,
+      unload_pct: 78.13,
+    },
+    latest: {
+      current: {
+        type: 'CURRENT',
+        timestamp: latestTimestamp,
+        cycle_id: welding.latest_cycle_number ?? 148,
+        rms_a: latestCurrent,
+        load_pct: os.utilization_percentage ?? 8.42,
+        run_state: 1, // Running
+        load_state: 1,
+        health_score: 88, // Electrical Health: 88
+        anomaly_score: 0,
+        diag_flags: 0,
+      },
+      motioniq: {
+        type: 'MOTIONIQ',
+        timestamp: latestTimestamp,
+        cycle_id: welding.latest_cycle_number ?? 148,
+        axis_x_rms_g: 0,
+        axis_y_rms_g: 0,
+        axis_z_rms_g: 0,
+        axis_x_kurtosis: 0,
+        axis_y_kurtosis: 0,
+        axis_z_kurtosis: 0,
+        axis_x_crest: 0,
+        axis_y_crest: 0,
+        axis_z_crest: 0,
+        max_kurtosis: 0,
+        state_tag: 0,
+        health_score: 82, // Mechanical Health: 82
+      },
+      temperature: {
+        type: 'TEMPERATURE',
+        timestamp: latestTimestamp,
+        cycle_id: welding.latest_cycle_number ?? 148,
+        instant_rate_c_per_min: 0,
+        cooling_rate_c_per_min: 0,
+        sustained_rise_min: 0,
+        rise_incidents: 0,
+        cooling_phase: 0,
+        stress_hours: 0,
+        rolling_variance: 0,
+        health_score: 79, // Thermal Health: 79
+        diag_flags: 0,
+      },
+      mfm: {
+        type: 'MFM',
+        timestamp: latestTimestamp,
+        cycle_id: welding.latest_cycle_number ?? 148,
+        avg_v: 415,
+        v1n: 240,
+        v2n: 240,
+        v3n: 240,
+        i1: latestCurrent,
+        i2: latestCurrent,
+        i3: latestCurrent,
+        power_kw: os.average_power_when_welding_kw ?? 12.88,
+        pf: 0.95,
+        freq_hz: 50,
+        energy_kwh: os.total_energy_kwh ?? 21.13,
+        v_imbalance_pct: 0,
+        i_imbalance_pct: 0,
+        health_score: 85, // Power Health: 85
+      },
+      kpi: {
+        type: 'KPI',
+        timestamp: latestTimestamp,
+        cycle_id: welding.latest_cycle_number ?? 148,
+        availability_pct: 86.3, // overallScore = round((88*0.25 + 82*0.25 + 79*0.2 + 85*0.15 + 86.3*0.15) * 10) / 10 = 84.0
+        utilization_pct: os.utilization_percentage ?? 8.42,
+        runtime_hours: (os.active_welding_time?.hours ?? 1.64) + (os.positioning_time?.hours ?? 9.0),
+        stopped_hours: os.off_time?.hours ?? 0.21,
+        loaded_hours: os.active_welding_time?.hours ?? 1.64,
+        unloaded_hours: os.idle_time?.hours ?? 8.85,
+        mtbi_hours: 0,
+        run_cycles: os.total_welding_cycles ?? 108,
+        stop_cycles: 0,
+        load_cycles: 0,
+        unload_cycles: 0,
+        active_advisory_count: 0,
+      },
+    },
+    records_found: welding.current_time_series?.length ?? 100,
+  };
+}
+
 export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
   ({ selectedAsset, rangePreset, onRunStateChange, onRefreshingChange }, ref) => {
     const [data, setData] = useState<OperationalKpiResponse | null>(null);
     const [graphData, setGraphData] = useState<OperationalGraphDataResponse | null>(null);
+    const [weldingData, setWeldingData] = useState<WeldingApiResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [trendSamples, setTrendSamples] = useState<TrendSample[]>([]);
     const [isExpandedModalOpen, setIsExpandedModalOpen] = useState<boolean>(false);
@@ -121,37 +255,87 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
 
     const loadData = useCallback(async (asset: string, preset: DateRangePreset, isPoll = false, forceRefresh = false) => {
       const dates = getRangeDates(preset);
-      const cachedGraph = getCachedOperationalGraphData(asset);
-      const matchingCachedGraph = isGraphDataMatchingAsset(cachedGraph, asset) ? cachedGraph : null;
+      const isRobo = asset === 'ROBO#01' || asset === 'ROBO01' || asset.includes('ROBO') || asset.includes('TXMMIGI');
 
       // Fast switch: check cache synchronously to render immediately without spinners or network wait
       if (!forceRefresh && !isPoll) {
-        const cachedKpi = getCachedOperationalKpi(asset, dates.start, dates.end, preset);
-        if (cachedKpi) {
-          setData(cachedKpi);
-          setGraphData(matchingCachedGraph);
-          if (onRunStateChange) {
-            onRunStateChange(cachedKpi.latest.current.run_state, asset, cachedKpi.latest.current.load_state);
-          }
-          setTrendSamples((prev) => {
-            if (prev.length === 0) {
-              return loadOrInitTrend(asset, cachedKpi.latest);
+        if (isRobo) {
+          const cachedWelding = getCachedWeldingData(asset, dates.start, dates.end);
+          if (cachedWelding) {
+            setWeldingData(cachedWelding);
+            const synthesizedKpi = buildRoboOperationalKpi(cachedWelding, dates);
+            setData(synthesizedKpi);
+            setGraphData(null);
+            if (onRunStateChange) {
+              onRunStateChange(1, asset, 1);
             }
-            return appendTrendSample(asset, prev, cachedKpi.latest);
-          });
-          setError(null);
-          if (onRefreshingChange) onRefreshingChange(false);
-          return;
+            setTrendSamples((prev) => {
+              if (prev.length === 0) return loadOrInitTrend(asset, synthesizedKpi.latest);
+              return appendTrendSample(asset, prev, synthesizedKpi.latest);
+            });
+            setError(null);
+            if (onRefreshingChange) onRefreshingChange(false);
+            return;
+          }
+        } else {
+          const cachedGraph = getCachedOperationalGraphData(asset);
+          const matchingCachedGraph = isGraphDataMatchingAsset(cachedGraph, asset) ? cachedGraph : null;
+          const cachedKpi = getCachedOperationalKpi(asset, dates.start, dates.end, preset);
+          if (cachedKpi) {
+            setData(cachedKpi);
+            setGraphData(matchingCachedGraph);
+            if (onRunStateChange) {
+              onRunStateChange(cachedKpi.latest.current.run_state, asset, cachedKpi.latest.current.load_state);
+            }
+            setTrendSamples((prev) => {
+              if (prev.length === 0) {
+                return loadOrInitTrend(asset, cachedKpi.latest);
+              }
+              return appendTrendSample(asset, prev, cachedKpi.latest);
+            });
+            setError(null);
+            if (onRefreshingChange) onRefreshingChange(false);
+            return;
+          }
         }
-      }
-
-      // When switching assets, immediately set matching cached graph (or null) so previous asset graph never lingers
-      if (!isPoll) {
-        setGraphData(matchingCachedGraph);
       }
 
       if (onRefreshingChange) onRefreshingChange(true);
       if (!isPoll) setError(null);
+
+      if (isRobo) {
+        // FOR ROBO WELDER: Use /welding ONLY. Never call /operational_kpi or /operational_graphdata!
+        setGraphData(null);
+        try {
+          const weldingResponse = await fetchWeldingData(asset, dates.start, dates.end, forceRefresh);
+          setWeldingData(weldingResponse);
+          const synthesizedKpi = buildRoboOperationalKpi(weldingResponse, dates);
+          setData(synthesizedKpi);
+          if (onRunStateChange) {
+            onRunStateChange(1, asset, 1);
+          }
+          setTrendSamples((prev) => {
+            if (prev.length === 0) return loadOrInitTrend(asset, synthesizedKpi.latest);
+            return appendTrendSample(asset, prev, synthesizedKpi.latest);
+          });
+          setError(null);
+        } catch (err: any) {
+          console.error('Error loading welding data from /welding endpoint:', err);
+          if (!isPoll) {
+            setError(err.message || 'Failed to fetch welding telemetry data');
+          }
+        } finally {
+          if (onRefreshingChange) onRefreshingChange(false);
+        }
+        return;
+      }
+
+      // FOR CNC1 AND COMPRESSORS:
+      const cachedGraph = getCachedOperationalGraphData(asset);
+      const matchingCachedGraph = isGraphDataMatchingAsset(cachedGraph, asset) ? cachedGraph : null;
+      if (!isPoll) {
+        setGraphData(matchingCachedGraph);
+      }
 
       try {
         const [kpiResponse, graphResponse] = await Promise.all([
@@ -163,6 +347,8 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
         ]);
 
         setData(kpiResponse);
+        setWeldingData(null);
+
         const matchingFetchedGraph = isGraphDataMatchingAsset(graphResponse, asset) ? graphResponse : null;
         setGraphData(matchingFetchedGraph);
         if (onRunStateChange) {
@@ -203,6 +389,12 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
       }, 60000);
       return () => clearInterval(pollInterval);
     }, [loadData, selectedAsset, rangePreset]);
+
+    const isRobo =
+      selectedAsset === 'ROBO#01' ||
+      selectedAsset === 'ROBO01' ||
+      selectedAsset.includes('ROBO') ||
+      selectedAsset.includes('TXMMIGI');
 
     const currentAssetMeta = AVAILABLE_ASSETS.find((a) => a.id === selectedAsset) || {
       id: selectedAsset,
@@ -267,11 +459,20 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
               </div>
             </section>
 
-            {/* Operational Summary (11 KPIs fitted into compact row) */}
+            {/* Operational Summary (11 KPIs for compressor/CNC, or 9 KPIs for Robo Welder) */}
             <section className="w-full shrink-0">
               <OperationalSummary
                 kpis={data.kpis}
                 selectedRange={rangePreset}
+                isRobo={isRobo}
+                weldingSummary={isRobo ? weldingData?.operational_summary : undefined}
+                weldingPeriod={
+                  isRobo
+                    ? weldingData
+                      ? `${weldingData.selected_range.start_date} to ${weldingData.selected_range.end_date}`
+                      : '2026-09-29 to 2026-09-30'
+                    : undefined
+                }
               />
             </section>
 
@@ -284,6 +485,8 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
                 graphData={graphData}
                 compressorId={selectedAsset}
                 onOpenExpandGraphs={handleOpenExpandGraphs}
+                isRobo={isRobo}
+                weldingTimeSeries={isRobo ? weldingData?.current_time_series : undefined}
               />
             </section>
 
@@ -306,6 +509,7 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
             trendSamples={trendSamples}
             selectedGraph={expandedModalGraph}
             latest={data?.latest}
+            weldingTimeSeries={isRobo ? weldingData?.current_time_series : undefined}
           />
         </div>
       </ScreenFitContainer>

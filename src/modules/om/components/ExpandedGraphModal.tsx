@@ -11,6 +11,7 @@ import {
 import { InteractiveGraph, SeriesConfig } from './InteractiveGraph';
 import { OperationalGraphDataResponse, TrendSample, OperationalKpiResponse } from '../types';
 import { isGraphDataMatchingAsset } from '../services/kpiService';
+import { WeldingCurrentTimeSeriesItem } from '../services/weldingService';
 
 interface ExpandedGraphModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface ExpandedGraphModalProps {
   trendSamples: TrendSample[];
   selectedGraph?: 'all' | 'current' | 'vibration' | 'temperature' | 'energyiq';
   latest?: OperationalKpiResponse['latest'];
+  weldingTimeSeries?: WeldingCurrentTimeSeriesItem[];
 }
 
 // Safe helper to extract latest numeric value from a series without throwing
@@ -40,6 +42,7 @@ export const ExpandedGraphModal: React.FC<ExpandedGraphModalProps> = ({
   trendSamples,
   selectedGraph = 'current',
   latest,
+  weldingTimeSeries,
 }) => {
   const [resetKey, setResetKey] = useState<number>(0);
 
@@ -74,17 +77,25 @@ export const ExpandedGraphModal: React.FC<ExpandedGraphModalProps> = ({
     compressorId?.toUpperCase()?.includes('CNC01') ||
     compressorId?.includes('TXMCNCI');
 
+  const isRobo01 =
+    compressorId === 'ROBO#01' ||
+    compressorId === 'ROBO01' ||
+    compressorId?.toUpperCase()?.includes('ROBO') ||
+    compressorId?.includes('TXMMIGI');
+
+  const isSingleOnly = isCnc01 || isRobo01;
+
   const [activeGraph, setActiveGraph] = useState<'current' | 'vibration' | 'temperature' | 'energyiq' | 'all'>(
-    isCnc01 ? 'current' : (selectedGraph || 'current')
+    isSingleOnly ? 'current' : (selectedGraph || 'current')
   );
 
   useEffect(() => {
-    if (isCnc01) {
+    if (isSingleOnly) {
       setActiveGraph('current');
     } else if (selectedGraph) {
       setActiveGraph(selectedGraph);
     }
-  }, [selectedGraph, isCnc01]);
+  }, [selectedGraph, isSingleOnly]);
 
   // Asset identifiers
   const isCmp01 =
@@ -99,15 +110,41 @@ export const ExpandedGraphModal: React.FC<ExpandedGraphModalProps> = ({
   }, [graphData, compressorId]);
 
   // Prepare Current series
-  const currentSeries: SeriesConfig[] = useMemo(() => [
-    {
-      name: activeGraphData?.graphs?.current?.label || (isCnc01 ? 'Average Current Live Trend' : 'RMS Current'),
-      data: activeGraphData?.graphs?.current?.series || [],
-      color: '#10b981',
-      unit: activeGraphData?.graphs?.current?.unit || 'A',
-      areaColor: 'rgba(16, 185, 129, 0.18)',
-    },
-  ], [isCnc01, activeGraphData?.graphs?.current]);
+  const currentSeries: SeriesConfig[] = useMemo(() => {
+    if (isRobo01) {
+      const roboData = (weldingTimeSeries && weldingTimeSeries.length > 0)
+        ? weldingTimeSeries.map((item) => {
+            const timeStr = item.timestamp.includes('T')
+              ? item.timestamp.split('T')[1].slice(0, 8)
+              : item.timestamp;
+            return {
+              timestamp: item.timestamp,
+              time: timeStr,
+              value: item.peak_current_a,
+            };
+          })
+        : [];
+      return [
+        {
+          name: 'Peak Current Live Trend',
+          data: roboData,
+          color: '#10b981',
+          unit: 'A',
+          areaColor: 'rgba(16, 185, 129, 0.18)',
+        },
+      ];
+    }
+
+    return [
+      {
+        name: activeGraphData?.graphs?.current?.label || (isCnc01 ? 'Average Current Live Trend' : 'RMS Current'),
+        data: activeGraphData?.graphs?.current?.series || [],
+        color: '#10b981',
+        unit: activeGraphData?.graphs?.current?.unit || 'A',
+        areaColor: 'rgba(16, 185, 129, 0.18)',
+      },
+    ];
+  }, [isRobo01, isCnc01, weldingTimeSeries, activeGraphData?.graphs?.current]);
 
   // Prepare Vibration series
   const vibSeries: SeriesConfig[] = useMemo(() => {

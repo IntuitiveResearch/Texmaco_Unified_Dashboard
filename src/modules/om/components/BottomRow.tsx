@@ -50,11 +50,19 @@ export const BottomRow: React.FC<BottomRowProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const isRobo =
+    compressorId === 'ROBO#01' ||
+    compressorId === 'ROBO01' ||
+    compressorId?.toUpperCase()?.includes('ROBO') ||
+    compressorId?.includes('TXMMIGI');
+
   const isCnc =
-    compressorId === 'CNC#01' ||
-    compressorId === 'CNC01' ||
-    compressorId?.toUpperCase()?.includes('CNC') ||
-    compressorId?.includes('TXMCNCI');
+    !isRobo && (
+      compressorId === 'CNC#01' ||
+      compressorId === 'CNC01' ||
+      compressorId?.toUpperCase()?.includes('CNC') ||
+      compressorId?.includes('TXMCNCI')
+    );
 
   const handleDownload = () => {
     if (onDownloadReport) {
@@ -80,7 +88,9 @@ export const BottomRow: React.FC<BottomRowProps> = ({
       onCreateWorkOrder();
     } else {
       showFeedback(
-        isCnc
+        isRobo
+          ? 'Work order draft created for Robo Welder maintenance team.'
+          : isCnc
           ? 'Work order draft created for CNC#01 maintenance team.'
           : 'Work order draft created for Compressor 2 maintenance team.'
       );
@@ -94,8 +104,8 @@ export const BottomRow: React.FC<BottomRowProps> = ({
     { name: 'Temperature', rate: '100 %' },
   ];
 
-  // For CNC#01, there should be no alerts (all clear)
-  const advisories = isCnc
+  // For CNC#01 and Robo Welder, there should be no alerts (all clear, same as others)
+  const advisories = isCnc || isRobo
     ? []
     : [
         {

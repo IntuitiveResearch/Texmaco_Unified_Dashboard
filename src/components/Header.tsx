@@ -63,10 +63,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [isDateOpen, setIsDateOpen] = useState(false);
   const assetRef = useRef<HTMLDivElement>(null);
   const dateRef = useRef<HTMLDivElement>(null);
-  const isWeldWiseView = currentTab === 'weldwise';
 
   const rangeLabels: Record<string, string> = {
-    '29_30_sep': '29–30 Sep 2026',
     today: 'Today',
     yesterday: 'Yesterday',
     '7days': 'Last 7 Days',
@@ -92,16 +90,6 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const getPresetOptions = (): { id: string; label: string }[] => {
-    if (isWeldWiseView) {
-      return [
-        { id: '29_30_sep', label: '29–30 Sep 2026' },
-        { id: 'today', label: 'Today' },
-        { id: 'yesterday', label: 'Yesterday' },
-        { id: '7d', label: 'Last 7 Days (7d)' },
-        { id: '30d', label: 'Last 30 Days (30d)' },
-        { id: 'custom', label: 'Custom Range' },
-      ];
-    }
     switch (currentTab) {
       case 'management':
         return [
@@ -127,14 +115,11 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const getDisplayLabel = () => {
-    if ((currentTab === 'management' || isWeldWiseView) && datePreset === 'custom') {
+    if (currentTab === 'management' && datePreset === 'custom') {
       if (customStartDate && customEndDate) {
         return `Custom (${formatDateSafe(customStartDate)} - ${formatDateSafe(customEndDate)})`;
       }
       return 'Custom Range';
-    }
-    if (isWeldWiseView && datePreset === '29_30_sep') {
-      return '29–30 Sep 2026';
     }
     if (currentTab === 'finance') {
       if (datePreset === '1y') return 'Last 1 Year (1y)';
@@ -146,10 +131,6 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const getTitleAndSubtitle = () => {
-    if (isWeldWiseView) return {
-      title: 'WeldWise - Robotic Welding',
-      subtitle: 'Real-Time Production Intelligence | From Input Current Data to Action',
-    };
     switch (currentTab) {
       case 'om':
         return {
@@ -199,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className={`${isWeldWiseView ? 'weldwise-header ' : ''}bg-[#061431] border-b border-[#0d224d] sticky top-0 z-30 shadow-md flex items-stretch min-h-[58px] text-white select-none`}>
+    <header className="bg-[#061431] border-b border-[#0d224d] sticky top-0 z-30 shadow-md flex items-stretch min-h-[58px] text-white select-none">
       {/* Left: Page Title & Subtitle */}
       <div className="bg-[#061431] px-3.5 sm:px-5 py-2 flex flex-col justify-center shrink-0 border-r border-[#0d224d] min-w-[200px] lg:min-w-[240px]">
         <h1 className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
@@ -279,8 +260,8 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Inline Custom Date Range Selector (Executive or WeldWise when 'custom' is active) */}
-          {(currentTab === 'management' || isWeldWiseView) && datePreset === 'custom' && (
+          {/* Inline Custom Date Range Selector (Executive when 'custom' is active) */}
+          {currentTab === 'management' && datePreset === 'custom' && (
             <div className="flex items-center gap-1.5 bg-[#0c2250] hover:bg-[#112d68] border border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-200 shadow-2xs">
               <span className="text-[10px] text-slate-400 font-bold uppercase">From</span>
               <input
@@ -325,7 +306,7 @@ export const Header: React.FC<HeaderProps> = ({
             {isDateOpen && (
               <div
                 className={`absolute right-0 mt-1.5 ${
-                  currentTab === 'management' || isWeldWiseView ? 'w-64' : currentTab === 'finance' ? 'w-48' : 'w-44'
+                  currentTab === 'management' ? 'w-64' : currentTab === 'finance' ? 'w-48' : 'w-44'
                 } bg-[#0a1e42] border border-[#1b3a72] rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in-50 duration-150 text-xs`}
               >
                 <div className="px-3 py-1 border-b border-white/10 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -363,8 +344,8 @@ export const Header: React.FC<HeaderProps> = ({
                   );
                 })}
 
-                {/* Custom Date Inputs Section inside dropdown for Management or WeldWise */}
-                {(currentTab === 'management' || isWeldWiseView) && (
+                {/* Custom Date Inputs Section inside dropdown for Management */}
+                {currentTab === 'management' && (
                   <div className="mt-1 pt-2 px-3 pb-2 border-t border-white/10 bg-[#071838]/80 rounded-b-xl">
                     <div className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-2">
                       Custom Date Range

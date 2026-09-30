@@ -7,7 +7,6 @@ import { FileText, Clock, FileSpreadsheet, Download } from 'lucide-react';
 import { OmDashboardView, OmDashboardRef } from './modules/om/OmDashboardView';
 import { ManagementDashboardView, ManagementDashboardRef } from './modules/management/ManagementDashboardView';
 import { FinanceDashboardView, FinanceDashboardRef } from './modules/finance/FinanceDashboardView';
-import { WeldWiseDashboardView, WeldWiseDashboardRef } from './modules/weldwise/WeldWiseDashboardView';
 import { useAssetStatuses } from './hooks/useAssetStatuses';
 
 const ReportsPlaceholderView: React.FC = () => (
@@ -63,10 +62,12 @@ const AVAILABLE_HEADER_ASSETS: HeaderAsset[] = [
     plant: 'Agarpara Plant',
     status: 'Running',
   },
-];
-
-const WELDWISE_HEADER_ASSETS: HeaderAsset[] = [
-  { id: 'ROBO#01', name: 'Robo Welder', plant: 'Texmaco - Agarpara', status: 'Running' },
+  {
+    id: 'ROBO#01',
+    name: 'Robo Welder',
+    plant: 'Texmaco - Agarpara',
+    status: 'Running',
+  },
 ];
 
 export default function App() {
@@ -88,16 +89,13 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [selectedAsset, setSelectedAsset] = useState<string>(() => {
     const saved = localStorage.getItem('texmaco_selected_asset');
-    return saved && saved !== 'ROBO#01' ? saved : 'CMP#02';
+    return saved ? saved : 'CMP#02';
   });
 
   // Date presets per module
   const [omDatePreset, setOmDatePreset] = useState<string>('30days');
   const [mgmtDatePreset, setMgmtDatePreset] = useState<string>('30d');
   const [financeDatePreset, setFinanceDatePreset] = useState<string>('1m');
-  const [weldwiseDatePreset, setWeldwiseDatePreset] = useState<string>('29_30_sep');
-  const [weldwiseStartDate, setWeldwiseStartDate] = useState<string>('2026-09-29');
-  const [weldwiseEndDate, setWeldwiseEndDate] = useState<string>('2026-09-30');
   const statusRangePreset = omDatePreset === 'today' ? 'today' : omDatePreset === '7days' ? '7days' : '30days';
   const { statuses: assetStatuses, reportRunState, refreshStatuses } = useAssetStatuses(isAuthenticated, statusRangePreset);
   const headerAssets = AVAILABLE_HEADER_ASSETS.map(asset => ({ ...asset, status: assetStatuses[asset.id] ?? 'Unknown' }));
@@ -129,23 +127,10 @@ export default function App() {
     }
   }, [selectedAsset]);
 
-  // Ensure selectedAsset is never ROBO#01 when on OM, Management, or Finance
-  React.useEffect(() => {
-    if (currentTab !== 'weldwise' && selectedAsset === 'ROBO#01') {
-      setSelectedAsset('CMP#02');
-    }
-  }, [currentTab, selectedAsset]);
-
   // Module Refs for imperative refresh
   const omRef = useRef<OmDashboardRef>(null);
   const managementRef = useRef<ManagementDashboardRef>(null);
   const financeRef = useRef<FinanceDashboardRef>(null);
-  const weldwiseRef = useRef<WeldWiseDashboardRef>(null);
-  const isWeldWiseView = currentTab === 'weldwise';
-
-  React.useEffect(() => {
-    if (isWeldWiseView) setIsRefreshing(false);
-  }, [isWeldWiseView]);
 
   const handleLoginSuccess = (user: { uid: string; name: string }) => {
     setIsAuthenticated(true);
@@ -160,9 +145,7 @@ export default function App() {
   };
 
   const handleRefresh = () => {
-    if (currentTab === 'weldwise' && weldwiseRef.current) {
-      weldwiseRef.current.refresh();
-    } else if (currentTab === 'om' && omRef.current) {
+    if (currentTab === 'om' && omRef.current) {
       omRef.current.refresh();
     } else if (currentTab === 'management' && managementRef.current) {
       managementRef.current.refresh();
@@ -188,7 +171,6 @@ export default function App() {
         onSelectTab={(tab) => setCurrentTab(tab)}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
-        roboticWelding={currentTab === 'weldwise'}
       />
 
       {/* Main Content Workspace */}
@@ -196,16 +178,12 @@ export default function App() {
         {/* Unified Executive Header */}
         <Header
           currentTab={currentTab}
-          selectedAsset={currentTab === 'weldwise' ? 'ROBO#01' : selectedAsset}
-          availableAssets={currentTab === 'weldwise' ? WELDWISE_HEADER_ASSETS : headerAssets}
+          selectedAsset={selectedAsset}
+          availableAssets={headerAssets}
           onAssetMenuOpen={() => { void refreshStatuses(); }}
-          onSelectAsset={(newAssetId) => {
-            if (currentTab !== 'weldwise' && newAssetId !== 'ROBO#01') setSelectedAsset(newAssetId);
-          }}
+          onSelectAsset={(newAssetId) => setSelectedAsset(newAssetId)}
           datePreset={
-            isWeldWiseView
-              ? weldwiseDatePreset
-              : currentTab === 'om'
+            currentTab === 'om'
               ? omDatePreset
               : currentTab === 'management'
               ? mgmtDatePreset
@@ -214,28 +192,7 @@ export default function App() {
               : '30days'
           }
           onSelectDatePreset={(newPreset) => {
-            if (isWeldWiseView) {
-              setWeldwiseDatePreset(newPreset);
-              const now = new Date();
-              const formatYMD = (d: Date) => format(d, 'yyyy-MM-dd');
-              if (newPreset === '29_30_sep') {
-                setWeldwiseStartDate('2026-09-29');
-                setWeldwiseEndDate('2026-09-30');
-              } else if (newPreset === 'today') {
-                setWeldwiseStartDate(formatYMD(now));
-                setWeldwiseEndDate(formatYMD(now));
-              } else if (newPreset === 'yesterday') {
-                const y = subDays(now, 1);
-                setWeldwiseStartDate(formatYMD(y));
-                setWeldwiseEndDate(formatYMD(y));
-              } else if (newPreset === '7d' || newPreset === '7days') {
-                setWeldwiseStartDate(formatYMD(subDays(now, 7)));
-                setWeldwiseEndDate(formatYMD(now));
-              } else if (newPreset === '30d' || newPreset === '30days') {
-                setWeldwiseStartDate(formatYMD(subDays(now, 30)));
-                setWeldwiseEndDate(formatYMD(now));
-              }
-            } else if (currentTab === 'om') {
+            if (currentTab === 'om') {
               setOmDatePreset(newPreset);
             } else if (currentTab === 'management') {
               setMgmtDatePreset(newPreset);
@@ -243,40 +200,24 @@ export default function App() {
               setFinanceDatePreset(newPreset);
             }
           }}
-          customStartDate={isWeldWiseView ? weldwiseStartDate : customStartDate}
-          customEndDate={isWeldWiseView ? weldwiseEndDate : customEndDate}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
           onCustomDateChange={(start, end) => {
-            if (isWeldWiseView) {
-              setWeldwiseStartDate(start);
-              setWeldwiseEndDate(end);
-              setWeldwiseDatePreset('custom');
-            } else {
-              setCustomStartDate(start);
-              setCustomEndDate(end);
-              setMgmtDatePreset('custom');
-            }
+            setCustomStartDate(start);
+            setCustomEndDate(end);
+            setMgmtDatePreset('custom');
           }}
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
           onOpenIntuitiveAi={handleOpenIntuitiveAi}
           onLogout={handleLogout}
-          notificationCount={isWeldWiseView ? 3 : 0}
-          onOpenNotifications={isWeldWiseView ? () => weldwiseRef.current?.openNotifications() : undefined}
+          notificationCount={0}
           userDisplayName={currentUser?.name || 'Texmaco Management'}
           theme="light"
         />
 
         {/* View Routing Canvas - Resolution Agnostic Single-Screen View */}
         <main className="flex-1 min-h-0 flex flex-col overflow-hidden h-full">
-          {isWeldWiseView && (
-            <WeldWiseDashboardView
-              ref={weldwiseRef}
-              datePreset={weldwiseDatePreset}
-              startDate={weldwiseStartDate}
-              endDate={weldwiseEndDate}
-              healthRangePreset={omDatePreset === 'today' ? 'today' : omDatePreset === '7days' ? '7days' : '30days'}
-            />
-          )}
           {currentTab === 'om' && (
             <OmDashboardView
               ref={omRef}

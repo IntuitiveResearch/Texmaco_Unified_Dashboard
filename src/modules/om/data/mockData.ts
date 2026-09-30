@@ -25,6 +25,14 @@ export const AVAILABLE_ASSETS: AssetMeta[] = [
     type: 'CNC',
     status: 'Running',
   },
+  {
+    id: 'ROBO#01',
+    name: 'Robo Welder',
+    plant: 'Texmaco - Agarpara',
+    deviceId: 'MACHINE#PI4G/TXMMIGI/26001',
+    type: 'Robotic Welder',
+    status: 'Running',
+  },
 ];
 
 export function getMockKpiData(

@@ -383,4 +383,9 @@ export const ASSET_OPTIONS: AssetOption[] = [
     asset: 'MACHINE#PI4G/TXMCNCI/26001',
     asset_type: 'cnc',
   },
+  {
+    name: 'ROBO#01',
+    asset: 'MACHINE#PI4G/TXMMIGI/26001',
+    asset_type: 'welder',
+  },
 ];

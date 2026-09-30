@@ -3,6 +3,7 @@ import { Activity, Thermometer, Zap, Info, Waves, Maximize2 } from 'lucide-react
 import { LatestTelemetry, TrendSample, KpiMetrics, OperationalGraphDataResponse } from '../types';
 import { fetchOperationalGraphData, isGraphDataMatchingAsset } from '../services/kpiService';
 import { InteractiveGraph, SeriesConfig } from './InteractiveGraph';
+import { WeldingCurrentTimeSeriesItem } from '../services/weldingService';
 
 interface TelemetryCardsProps {
   latest: LatestTelemetry;
@@ -11,6 +12,8 @@ interface TelemetryCardsProps {
   graphData?: OperationalGraphDataResponse | null;
   compressorId?: string;
   onOpenExpandGraphs?: (targetGraph?: 'current' | 'vibration' | 'temperature' | 'energyiq' | 'all') => void;
+  isRobo?: boolean;
+  weldingTimeSeries?: WeldingCurrentTimeSeriesItem[];
 }
 
 const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
@@ -20,6 +23,8 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
   graphData: propGraphData,
   compressorId = 'CMP#02',
   onOpenExpandGraphs,
+  isRobo = false,
+  weldingTimeSeries,
 }) => {
   const current = latest.current;
   const temp = latest.temperature;
@@ -44,23 +49,6 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
     return null;
   }, [propGraphData, internalGraphData, compressorId]);
 
-  // Fetch /operational_graphdata if not provided or when compressor changes
-  useEffect(() => {
-    if (isGraphDataMatchingAsset(propGraphData, compressorId)) {
-      return;
-    }
-
-    let isMounted = true;
-    fetchOperationalGraphData(compressorId).then((res) => {
-      if (isMounted && res && isGraphDataMatchingAsset(res, compressorId)) {
-        setInternalGraphData(res);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [propGraphData, compressorId]);
   const isCmp01 =
     compressorId === 'CMP#01' ||
     compressorId === 'CMP01' ||
@@ -74,9 +62,41 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
     compressorId?.toUpperCase()?.includes('CNC01') ||
     compressorId?.includes('TXMCNCI');
 
+  const isRobo01 =
+    Boolean(isRobo) ||
+    compressorId === 'ROBO#01' ||
+    compressorId === 'ROBO01' ||
+    compressorId?.toUpperCase()?.includes('ROBO') ||
+    compressorId?.includes('TXMMIGI');
+
   const isHideGraphs = false;
-  // CNC#01 has no vibration, temperature, or MFM telemetry, but now has real Current telemetry & graph!
-  const isZeroTelemetry = isCnc01;
+  // CNC#01 and Robo Welder have no vibration, temperature, or MFM telemetry, but show full width Current live trend!
+  const isZeroTelemetry = isCnc01 || isRobo01;
+
+  // Fetch /operational_graphdata if not provided or when compressor changes (never for Robo Welder)
+  useEffect(() => {
+    if (isRobo01 || isGraphDataMatchingAsset(propGraphData, compressorId)) {
+      return;
+    }
+
+    let isMounted = true;
+    fetchOperationalGraphData(compressorId).then((res) => {
+      if (isMounted && res && isGraphDataMatchingAsset(res, compressorId)) {
+        setInternalGraphData(res);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [propGraphData, compressorId, isRobo01]);
+
+  const roboLatestCurrent = useMemo(() => {
+    if (weldingTimeSeries && weldingTimeSeries.length > 0) {
+      return weldingTimeSeries[weldingTimeSeries.length - 1]?.peak_current_a ?? 21.87;
+    }
+    return 21.87;
+  }, [weldingTimeSeries]);
 
   // For CNC#01, get latest values from API graph data if available, or from KPI latest.current
   const cnc01LatestCurrent = useMemo(() => {
@@ -148,6 +168,31 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
 
   // Prepare series for Current Graph
   const currentSeries: SeriesConfig[] = useMemo(() => {
+    if (isRobo01) {
+      const roboData = (weldingTimeSeries && weldingTimeSeries.length > 0)
+        ? weldingTimeSeries.map((item) => {
+            const timeStr = item.timestamp.includes('T')
+              ? item.timestamp.split('T')[1].slice(0, 8)
+              : item.timestamp;
+            return {
+              timestamp: item.timestamp,
+              time: timeStr,
+              value: item.peak_current_a,
+            };
+          })
+        : [];
+
+      return [
+        {
+          name: 'Peak Current Live Trend',
+          data: roboData,
+          color: '#059669',
+          unit: 'A',
+          areaColor: 'rgba(5, 150, 105, 0.22)',
+        },
+      ];
+    }
+
     if (isCnc01) {
       const cncSeries = activeGraphData?.graphs?.current?.series || [];
       return [
@@ -170,7 +215,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
         areaColor: 'rgba(5, 150, 105, 0.22)',
       },
     ];
-  }, [isCnc01, activeGraphData?.graphs?.current?.series, activeGraphData?.graphs?.current?.label, activeGraphData?.graphs?.current?.unit]);
+  }, [isRobo01, isCnc01, weldingTimeSeries, activeGraphData?.graphs?.current?.series, activeGraphData?.graphs?.current?.label, activeGraphData?.graphs?.current?.unit]);
 
   // Prepare series for Vibration Graph
   const vibSeries: SeriesConfig[] = useMemo(() => {
@@ -264,9 +309,9 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
         )}
       </div>
 
-      <div className={isCnc01 ? "grid grid-cols-1 w-full" : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5 sm:gap-2 2xl:gap-2.5"}>
+      <div className={(isCnc01 || isRobo01) ? "grid grid-cols-1 w-full" : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5 sm:gap-2 2xl:gap-2.5"}>
         {/* 1. CURRENT (I) */}
-        <div className={`bg-[#ecfdf5] rounded-xl border border-emerald-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden ${isCnc01 ? 'col-span-full w-full' : ''}`}>
+        <div className={`bg-[#ecfdf5] rounded-xl border border-emerald-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden ${(isCnc01 || isRobo01) ? 'col-span-full w-full' : ''}`}>
           <div>
             {/* Card Header with individual expand button */}
             <div className="flex items-center justify-between mb-0.5 2xl:mb-1">
@@ -276,12 +321,21 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-[14px] 2xl:text-base font-bold text-slate-900 tracking-tight">
-                    {isCnc01 ? 'Average Current Live Trend' : 'Current (I)'}
+                    {isCnc01 || isRobo01 ? 'Average Current Live Trend' : 'Current (I)'}
                   </h3>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {isCnc01 && (
+                {isRobo01 ? (
+                  <div className="flex items-center gap-2.5 bg-white/80 border border-emerald-200/80 rounded-md px-2 py-0.5 text-xs font-sans shadow-2xs">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-slate-500 font-semibold">Latest Current:</span>
+                      <span className="font-bold text-slate-900 text-xs sm:text-sm tabular-nums">
+                        {roboLatestCurrent.toFixed(2)} A
+                      </span>
+                    </div>
+                  </div>
+                ) : isCnc01 ? (
                   <div className="flex items-center gap-2.5 bg-white/80 border border-emerald-200/80 rounded-md px-2 py-0.5 text-xs font-sans shadow-2xs">
                     <div className="flex items-center gap-1">
                       <span className="text-[10px] text-slate-500 font-semibold">Average Current:</span>
@@ -297,7 +351,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
                       </span>
                     </div>
                   </div>
-                )}
+                ) : null}
                 {onOpenExpandGraphs && (
                   <button
                     type="button"
@@ -312,7 +366,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
             </div>
 
             {/* Primary stats for non-CNC compressors */}
-            {!isCnc01 && (
+            {!isCnc01 && !isRobo01 && (
               <div className="grid grid-cols-2 gap-1 mb-0.5">
                 <div>
                   <span className="text-[9.5px] 2xl:text-[10px] text-slate-500 font-semibold block leading-none mb-0.5">
@@ -337,7 +391,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
           {/* Overview Graph - Consistent height with compressor graphs */}
           <InteractiveGraph
             id="current"
-            title={isCnc01 ? 'Average Current Live Trend' : 'Current (I)'}
+            title={isCnc01 || isRobo01 ? 'Average Current Live Trend' : 'Current (I)'}
             series={currentSeries}
             unit={activeGraphData?.graphs?.current?.unit || 'A'}
             colorTheme="emerald"
@@ -347,8 +401,8 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
           />
         </div>
 
-        {/* 2. VIBRATION (g) - Hidden for CNC1 */}
-        {!isCnc01 && (
+        {/* 2. VIBRATION (g) - Hidden for CNC1 and Robo Welder */}
+        {!isZeroTelemetry && (
           <div className="bg-[#eff6ff] rounded-xl border border-blue-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
               {/* Card Header with individual expand button */}
@@ -450,8 +504,8 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
           </div>
         )}
 
-        {/* 3. TEMPERATURE - Hidden for CNC1 */}
-        {!isCnc01 && (
+        {/* 3. TEMPERATURE - Hidden for CNC1 and Robo Welder */}
+        {!isZeroTelemetry && (
           <div className="bg-[#fff1f2] rounded-xl border border-rose-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
               {/* Card Header with individual expand button */}
@@ -536,8 +590,8 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
           </div>
         )}
 
-        {/* 4. ELECTRICAL (MFM384 / EnergyIQ) - Hidden for CNC1 */}
-        {!isCnc01 && (
+        {/* 4. ELECTRICAL (MFM384 / EnergyIQ) - Hidden for CNC1 and Robo Welder */}
+        {!isZeroTelemetry && (
           <div className="bg-[#fffbeb] rounded-xl border border-amber-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
               {/* Card Header with individual expand button */}

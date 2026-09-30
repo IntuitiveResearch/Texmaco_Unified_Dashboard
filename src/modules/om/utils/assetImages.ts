@@ -4,6 +4,8 @@ import cmp01Jpeg from '../images/CMP01.jpeg';
 import cmp02Jpeg from '../images/CMP02.jpeg';
 import cnc01Jpeg from '../../../assets/CNC01.jpeg';
 
+import roboWelderJpeg from '../../../assets/weldwise-robotic-cell.jpg';
+
 // Dynamically discover any images added into /src/images or /src/assets
 const imageModules = import.meta.glob<{ default: string }>('/src/images/*.{png,jpg,jpeg,svg,webp}', {
   eager: true,
@@ -47,7 +49,7 @@ export function getCompressorImage(compressorId: string, customUploadedUrl?: str
   }
 
   if (normalizedId.includes('robo') || normalizedId.includes('txmmigi')) {
-    return cnc01Jpeg;
+    return roboWelderJpeg;
   }
 
   if (normalizedId.includes('cmp02') || normalizedId.includes('cmp2')) {
