@@ -1,0 +1,326 @@
+import React, { useState, useRef } from 'react';
+import { format, subDays } from 'date-fns';
+import { Sidebar, DashboardTab } from './components/Sidebar';
+import { Header, HeaderAsset } from './components/Header';
+import { LoginScreen } from './components/LoginScreen';
+import { FileText, Clock, FileSpreadsheet, Download } from 'lucide-react';
+import { OmDashboardView, OmDashboardRef } from './modules/om/OmDashboardView';
+import { ManagementDashboardView, ManagementDashboardRef } from './modules/management/ManagementDashboardView';
+import { FinanceDashboardView, FinanceDashboardRef } from './modules/finance/FinanceDashboardView';
+import { WeldWiseDashboardView, WeldWiseDashboardRef } from './modules/weldwise/WeldWiseDashboardView';
+import { useAssetStatuses } from './hooks/useAssetStatuses';
+
+const ReportsPlaceholderView: React.FC = () => (
+  <div className="flex-1 w-full p-4 lg:p-6 flex items-center justify-center">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-8 max-w-lg w-full text-center shadow-xs">
+      <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-4">
+        <FileText className="w-7 h-7" />
+      </div>
+      <h2 className="text-lg font-bold text-slate-800">Executive Reports Center</h2>
+      <p className="text-xs text-slate-500 mt-1 mb-6 leading-relaxed">
+        The centralized report generation and scheduled compliance delivery engine for Texmaco Rail & Engineering is currently being provisioned.
+      </p>
+      <div className="grid grid-cols-2 gap-3 text-left mb-6">
+        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs mb-1">
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Shift Telemetry</span>
+          </div>
+          <p className="text-[10.5px] text-slate-400">Automated shift-wise operational CSV logs</p>
+        </div>
+        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs mb-1">
+            <Download className="w-4 h-4 text-blue-600" />
+            <span>Financial Audit</span>
+          </div>
+          <p className="text-[10.5px] text-slate-400">Monthly asset exposure PDF summaries</p>
+        </div>
+      </div>
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold">
+        <Clock className="w-3.5 h-3.5" />
+        <span>Status: Module Scheduled for Deployment</span>
+      </div>
+    </div>
+  </div>
+);
+
+const AVAILABLE_HEADER_ASSETS: HeaderAsset[] = [
+  {
+    id: 'CMP#01',
+    name: 'Compressor 1',
+    plant: 'Agarpara Plant',
+    status: 'Running',
+  },
+  {
+    id: 'CMP#02',
+    name: 'Compressor 2',
+    plant: 'Agarpara Plant',
+    status: 'Running',
+  },
+  {
+    id: 'CNC#01',
+    name: 'CNC 1',
+    plant: 'Agarpara Plant',
+    status: 'Running',
+  },
+];
+
+const WELDWISE_HEADER_ASSETS: HeaderAsset[] = [
+  { id: 'ROBO#01', name: 'Robo Welder', plant: 'Texmaco - Agarpara', status: 'Running' },
+];
+
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
+
+  const [currentUser, setCurrentUser] = useState<{ uid: string; name: string } | null>(() => {
+    try {
+      const stored = localStorage.getItem('texmaco_unified_auth');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Default active tab to 'om' or 'management'
+  const [currentTab, setCurrentTab] = useState<DashboardTab>('om');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [selectedAsset, setSelectedAsset] = useState<string>(() => {
+    const saved = localStorage.getItem('texmaco_selected_asset');
+    return saved && saved !== 'ROBO#01' ? saved : 'CMP#02';
+  });
+
+  // Date presets per module
+  const [omDatePreset, setOmDatePreset] = useState<string>('30days');
+  const [mgmtDatePreset, setMgmtDatePreset] = useState<string>('30d');
+  const [financeDatePreset, setFinanceDatePreset] = useState<string>('1m');
+  const [weldwiseDatePreset, setWeldwiseDatePreset] = useState<string>('29_30_sep');
+  const [weldwiseStartDate, setWeldwiseStartDate] = useState<string>('2026-09-29');
+  const [weldwiseEndDate, setWeldwiseEndDate] = useState<string>('2026-09-30');
+  const statusRangePreset = omDatePreset === 'today' ? 'today' : omDatePreset === '7days' ? '7days' : '30days';
+  const { statuses: assetStatuses, reportRunState, refreshStatuses } = useAssetStatuses(isAuthenticated, statusRangePreset);
+  const headerAssets = AVAILABLE_HEADER_ASSETS.map(asset => ({ ...asset, status: assetStatuses[asset.id] ?? 'Unknown' }));
+
+  // Custom date range for Executive Dashboard
+  const [customStartDate, setCustomStartDate] = useState<string>(
+    format(subDays(new Date(), 30), 'yyyy-MM-dd')
+  );
+  const [customEndDate, setCustomEndDate] = useState<string>(
+    format(new Date(), 'yyyy-MM-dd')
+  );
+
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const theme = 'light';
+
+  // State for Intuitive AI Report Modal in Management
+  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+
+  // Always keep light theme active
+  React.useEffect(() => {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('texmaco_theme', 'light');
+  }, []);
+
+  // Synchronize selected machine asset to persistent storage
+  React.useEffect(() => {
+    if (selectedAsset) {
+      localStorage.setItem('texmaco_selected_asset', selectedAsset);
+    }
+  }, [selectedAsset]);
+
+  // Ensure selectedAsset is never ROBO#01 when on OM, Management, or Finance
+  React.useEffect(() => {
+    if (currentTab !== 'weldwise' && selectedAsset === 'ROBO#01') {
+      setSelectedAsset('CMP#02');
+    }
+  }, [currentTab, selectedAsset]);
+
+  // Module Refs for imperative refresh
+  const omRef = useRef<OmDashboardRef>(null);
+  const managementRef = useRef<ManagementDashboardRef>(null);
+  const financeRef = useRef<FinanceDashboardRef>(null);
+  const weldwiseRef = useRef<WeldWiseDashboardRef>(null);
+  const isWeldWiseView = currentTab === 'weldwise';
+
+  React.useEffect(() => {
+    if (isWeldWiseView) setIsRefreshing(false);
+  }, [isWeldWiseView]);
+
+  const handleLoginSuccess = (user: { uid: string; name: string }) => {
+    setIsAuthenticated(true);
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('texmaco_unified_auth');
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
+
+  const handleRefresh = () => {
+    if (currentTab === 'weldwise' && weldwiseRef.current) {
+      weldwiseRef.current.refresh();
+    } else if (currentTab === 'om' && omRef.current) {
+      omRef.current.refresh();
+    } else if (currentTab === 'management' && managementRef.current) {
+      managementRef.current.refresh();
+    } else if (currentTab === 'finance' && financeRef.current) {
+      financeRef.current.refresh();
+    }
+  };
+
+  const handleOpenIntuitiveAi = () => {
+    setIsReportModalOpen(true);
+  };
+
+  // If user is not authenticated, render unified login screen
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  return (
+    <div className="min-h-screen max-h-screen h-screen flex flex-row overflow-hidden bg-[#f4f7fb] text-slate-800 font-sans">
+      {/* Collapsible Left Sidebar */}
+      <Sidebar
+        currentTab={currentTab}
+        onSelectTab={(tab) => setCurrentTab(tab)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+        roboticWelding={currentTab === 'weldwise'}
+      />
+
+      {/* Main Content Workspace */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Unified Executive Header */}
+        <Header
+          currentTab={currentTab}
+          selectedAsset={currentTab === 'weldwise' ? 'ROBO#01' : selectedAsset}
+          availableAssets={currentTab === 'weldwise' ? WELDWISE_HEADER_ASSETS : headerAssets}
+          onAssetMenuOpen={() => { void refreshStatuses(); }}
+          onSelectAsset={(newAssetId) => {
+            if (currentTab !== 'weldwise' && newAssetId !== 'ROBO#01') setSelectedAsset(newAssetId);
+          }}
+          datePreset={
+            isWeldWiseView
+              ? weldwiseDatePreset
+              : currentTab === 'om'
+              ? omDatePreset
+              : currentTab === 'management'
+              ? mgmtDatePreset
+              : currentTab === 'finance'
+              ? financeDatePreset
+              : '30days'
+          }
+          onSelectDatePreset={(newPreset) => {
+            if (isWeldWiseView) {
+              setWeldwiseDatePreset(newPreset);
+              const now = new Date();
+              const formatYMD = (d: Date) => format(d, 'yyyy-MM-dd');
+              if (newPreset === '29_30_sep') {
+                setWeldwiseStartDate('2026-09-29');
+                setWeldwiseEndDate('2026-09-30');
+              } else if (newPreset === 'today') {
+                setWeldwiseStartDate(formatYMD(now));
+                setWeldwiseEndDate(formatYMD(now));
+              } else if (newPreset === 'yesterday') {
+                const y = subDays(now, 1);
+                setWeldwiseStartDate(formatYMD(y));
+                setWeldwiseEndDate(formatYMD(y));
+              } else if (newPreset === '7d' || newPreset === '7days') {
+                setWeldwiseStartDate(formatYMD(subDays(now, 7)));
+                setWeldwiseEndDate(formatYMD(now));
+              } else if (newPreset === '30d' || newPreset === '30days') {
+                setWeldwiseStartDate(formatYMD(subDays(now, 30)));
+                setWeldwiseEndDate(formatYMD(now));
+              }
+            } else if (currentTab === 'om') {
+              setOmDatePreset(newPreset);
+            } else if (currentTab === 'management') {
+              setMgmtDatePreset(newPreset);
+            } else if (currentTab === 'finance') {
+              setFinanceDatePreset(newPreset);
+            }
+          }}
+          customStartDate={isWeldWiseView ? weldwiseStartDate : customStartDate}
+          customEndDate={isWeldWiseView ? weldwiseEndDate : customEndDate}
+          onCustomDateChange={(start, end) => {
+            if (isWeldWiseView) {
+              setWeldwiseStartDate(start);
+              setWeldwiseEndDate(end);
+              setWeldwiseDatePreset('custom');
+            } else {
+              setCustomStartDate(start);
+              setCustomEndDate(end);
+              setMgmtDatePreset('custom');
+            }
+          }}
+          isRefreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          onOpenIntuitiveAi={handleOpenIntuitiveAi}
+          onLogout={handleLogout}
+          notificationCount={isWeldWiseView ? 3 : 0}
+          onOpenNotifications={isWeldWiseView ? () => weldwiseRef.current?.openNotifications() : undefined}
+          userDisplayName={currentUser?.name || 'Texmaco Management'}
+          theme="light"
+        />
+
+        {/* View Routing Canvas - Resolution Agnostic Single-Screen View */}
+        <main className="flex-1 min-h-0 flex flex-col overflow-hidden h-full">
+          {isWeldWiseView && (
+            <WeldWiseDashboardView
+              ref={weldwiseRef}
+              datePreset={weldwiseDatePreset}
+              startDate={weldwiseStartDate}
+              endDate={weldwiseEndDate}
+              healthRangePreset={omDatePreset === 'today' ? 'today' : omDatePreset === '7days' ? '7days' : '30days'}
+            />
+          )}
+          {currentTab === 'om' && (
+            <OmDashboardView
+              ref={omRef}
+              selectedAsset={selectedAsset}
+              rangePreset={(omDatePreset as any) || '30days'}
+              onRefreshingChange={setIsRefreshing}
+              onRunStateChange={reportRunState}
+            />
+          )}
+
+          {currentTab === 'management' && (
+            <ManagementDashboardView
+              ref={managementRef}
+              selectedAsset={selectedAsset}
+              datePreset={mgmtDatePreset}
+              customStartDate={customStartDate}
+              customEndDate={customEndDate}
+              onCustomDateChange={(start, end) => {
+                setCustomStartDate(start);
+                setCustomEndDate(end);
+                setMgmtDatePreset('custom');
+              }}
+              isReportModalOpen={isReportModalOpen}
+              onCloseReportModal={() => setIsReportModalOpen(false)}
+              onOpenReportModal={() => setIsReportModalOpen(true)}
+              onSelectAsset={(asset) => setSelectedAsset(asset)}
+              onSelectDatePreset={(preset) => setMgmtDatePreset(preset)}
+              onRefreshingChange={setIsRefreshing}
+              theme="light"
+            />
+          )}
+
+          {currentTab === 'finance' && (
+            <FinanceDashboardView
+              ref={financeRef}
+              selectedAssetId={selectedAsset}
+              timeRange={financeDatePreset}
+              onRefreshingChange={setIsRefreshing}
+            />
+          )}
+
+          {currentTab === 'reports' && <ReportsPlaceholderView />}
+        </main>
+      </div>
+    </div>
+  );
+}

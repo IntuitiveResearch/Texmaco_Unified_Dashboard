@@ -1,0 +1,47 @@
+{
+  "functions": {
+    "api/analyze-report.ts": { "maxDuration": 150 }
+  },
+  "rewrites": [
+    {
+      "source": "/api/dashboard",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/dashboard"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/dashboard"
+    },
+    {
+      "source": "/operational_kpi",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/operational_kpi"
+    },
+    {
+      "source": "/api/operational_kpi",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/operational_kpi"
+    },
+    {
+      "source": "/operational_graphdata",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/operational_graphdata"
+    },
+    {
+      "source": "/api/operational_graphdata",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/operational_graphdata"
+    },
+    {
+      "source": "/test_route",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/test_route"
+    },
+    {
+      "source": "/api/test_route",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/test_route"
+    },
+    {
+      "source": "/api/financial_intel",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/financial_intel"
+    },
+    {
+      "source": "/financial_intel",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/financial_intel"
+    }
+  ]
+}

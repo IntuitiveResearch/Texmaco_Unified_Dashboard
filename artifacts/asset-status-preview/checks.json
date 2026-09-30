@@ -1,0 +1,20 @@
+{
+  "statusMapping": true,
+  "initialUnloadedCompressorRuns": true,
+  "allOptionColors": true,
+  "stoppedMatchesCard": true,
+  "refreshRunningMatchesCard": true,
+  "refreshUnloadedStillRunning": true,
+  "refreshedOption": true,
+  "delayedResponseKeepsSelectedAsset": true,
+  "delayedResponseUpdatesItsOwnOption": true,
+  "zeroCurrentOverridesRunningFlag": true,
+  "positiveCurrentOverridesStoppedFlag": true,
+  "cncStatus": true,
+  "cncRetainsIdleStatus": true,
+  "roboPreviewPreserved": true,
+  "noRoboApiCalls": true,
+  "executiveUsesSameStatus": true,
+  "mobileDropdownFits": true,
+  "errors": []
+}

@@ -1,0 +1,97 @@
+{
+  "dataConsistency": true,
+  "desktop": {
+    "viewport": [
+      1600,
+      800
+    ],
+    "page": [
+      1392,
+      730
+    ],
+    "content": [
+      1392,
+      730
+    ],
+    "kpis": 6,
+    "canvases": 4,
+    "image": true,
+    "documentOverflow": false
+  },
+  "roboRoute": true,
+  "monthOverview": true,
+  "legendToggle": true,
+  "expand Daily Running vs Idle vs Downtime": true,
+  "escape Daily Running vs Idle vs Downtime": true,
+  "expand Utilization %": true,
+  "escape Utilization %": true,
+  "expand Availability Trend": true,
+  "escape Availability Trend": true,
+  "expand Production Cycle": true,
+  "escape Production Cycle": true,
+  "equipmentDialog": true,
+  "attentionDialog": true,
+  "refresh": true,
+  "weekFilter": true,
+  "customRange": true,
+  "laptop": {
+    "viewport": [
+      1366,
+      768
+    ],
+    "page": [
+      1158,
+      698
+    ],
+    "content": [
+      1158,
+      698
+    ],
+    "kpis": 6,
+    "canvases": 4,
+    "image": true,
+    "documentOverflow": false
+  },
+  "tablet": {
+    "viewport": [
+      1024,
+      768
+    ],
+    "page": [
+      810,
+      662
+    ],
+    "content": [
+      810,
+      1432
+    ],
+    "kpis": 6,
+    "canvases": 4,
+    "image": true,
+    "documentOverflow": false
+  },
+  "mobile": {
+    "viewport": [
+      390,
+      844
+    ],
+    "page": [
+      328,
+      700
+    ],
+    "content": [
+      328,
+      2490
+    ],
+    "kpis": 6,
+    "canvases": 4,
+    "image": true,
+    "documentOverflow": false,
+    "overlappingRows": false
+  },
+  "cncStillSeparate": true,
+  "compressorStillSeparate": true,
+  "returnToRobo": true,
+  "weldwisePreserved": true,
+  "errors": []
+}

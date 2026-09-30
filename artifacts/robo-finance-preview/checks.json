@@ -1,0 +1,112 @@
+{
+  "calculations": true,
+  "desktop": {
+    "viewport": [
+      1600,
+      800
+    ],
+    "page": [
+      1392,
+      730
+    ],
+    "content": [
+      1392,
+      730
+    ],
+    "kpis": 5,
+    "canvas": true,
+    "opportunities": 5,
+    "documentOverflow": false,
+    "overlappingRows": false
+  },
+  "desktopTableFits": true,
+  "roboRoute": true,
+  "baselineOverview": true,
+  "trend downtime": true,
+  "trend energy": true,
+  "trend idle": true,
+  "trend maintenance": true,
+  "trend total": true,
+  "distributionSelection": true,
+  "priority high": true,
+  "priority medium": true,
+  "priority low": true,
+  "priority all": true,
+  "expandedTrend": true,
+  "escapeClosesDialog": true,
+  "notifications": true,
+  "editRecalculates": true,
+  "savedLocally": true,
+  "cancelPreservesValues": true,
+  "noWeldingApiCalls": true,
+  "saveSurvivesReload": true,
+  "reset": true,
+  "threeMonthRange": true,
+  "yearRange": true,
+  "refresh": true,
+  "laptop": {
+    "viewport": [
+      1366,
+      768
+    ],
+    "page": [
+      1158,
+      698
+    ],
+    "content": [
+      1158,
+      698
+    ],
+    "kpis": 5,
+    "canvas": true,
+    "opportunities": 5,
+    "documentOverflow": false,
+    "overlappingRows": false
+  },
+  "laptopTableFits": true,
+  "tablet": {
+    "viewport": [
+      1024,
+      768
+    ],
+    "page": [
+      804,
+      662
+    ],
+    "content": [
+      804,
+      1405
+    ],
+    "kpis": 5,
+    "canvas": true,
+    "opportunities": 5,
+    "documentOverflow": false,
+    "overlappingRows": false
+  },
+  "mobile": {
+    "viewport": [
+      390,
+      844
+    ],
+    "page": [
+      328,
+      700
+    ],
+    "content": [
+      328,
+      2240
+    ],
+    "kpis": 5,
+    "canvas": true,
+    "opportunities": 5,
+    "documentOverflow": false,
+    "overlappingRows": false
+  },
+  "mobileEditor": true,
+  "compressorPreserved": true,
+  "cncPreserved": true,
+  "returnToRobo": true,
+  "executivePreserved": true,
+  "weldwisePreserved": true,
+  "errors": []
+}

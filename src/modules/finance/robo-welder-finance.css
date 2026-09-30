@@ -1,0 +1,226 @@
+.robo-finance-root {
+  --rfin-ink: #17253b;
+  --rfin-muted: #6e8099;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  padding: 10px;
+  background: #f3f7fc;
+  color: var(--rfin-ink);
+  font-family: Arial, 'Segoe UI', sans-serif;
+  container-type: inline-size;
+}
+.rfin-layout { display: grid; flex-shrink: 0; height: 100%; min-height: 633px; grid-template-rows: 102px minmax(235px, 1fr) minmax(280px, 1.15fr); gap: 8px; }
+.rfin-panel { min-width: 0; min-height: 0; overflow: hidden; background: linear-gradient(135deg, #fff, #fcfdff); border: 1px solid #e3eaf4; border-radius: 10px; box-shadow: 0 2px 5px #15325503; }
+.rfin-kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+.rfin-kpi { display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; }
+.rfin-kpi h2 { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; line-height: 1.25; margin: 0 0 5px; min-height: 27px; letter-spacing: -.3px; }
+.rfin-kpi h2 > span { display: inline-flex; justify-content: center; align-items: center; width: 29px; height: 29px; flex-shrink: 0; border-radius: 50%; color: var(--rfin-accent); background: color-mix(in srgb, var(--rfin-accent) 14%, white); }
+.rfin-kpi > strong { display: block; font-size: clamp(22px, 1.7vw, 29px); color: var(--rfin-accent); font-weight: 700; letter-spacing: -.85px; line-height: 1.1; white-space: nowrap; }
+.rfin-kpi p { margin: 5px 0 0; font-size: 10px; line-height: 1.25; color: #53677f; }
+.rfin-visual-grid { display: grid; grid-template-columns: 1.55fr 1.35fr .85fr; gap: 8px; min-height: 0; }
+.rfin-simple-heading { margin: 0 12px; padding: 11px 0 10px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #edf1f7; line-height: 1.2; letter-spacing: -.25px; }
+.rfin-distribution { display: flex; flex-direction: column; }
+.rfin-distribution-body { display: flex; align-items: center; gap: 17px; flex: 1; min-height: 0; padding: 12px 15px; }
+.rfin-donut { position: relative; width: 35%; max-width: 190px; aspect-ratio: 1; flex-shrink: 0; background: transparent; border: 0; padding: 0; cursor: pointer; }
+.rfin-donut svg { width: 100%; height: 100%; display: block; }
+.rfin-donut > span { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.rfin-donut strong { font-size: 20px; font-weight: 700; letter-spacing: -.6px; line-height: 1.2; }
+.rfin-donut small { font-size: 12px; margin-top: 3px; }
+.rfin-distribution-legend { flex: 1; min-width: 0; display: grid; gap: 17px; }
+.rfin-distribution-legend button { display: grid; grid-template-columns: minmax(0, 1fr) 43px 62px; gap: 6px; align-items: center; width: 100%; background: transparent; border: 1px solid transparent; padding: 3px 0; border-radius: 5px; color: var(--rfin-ink); font-size: 11px; text-align: left; cursor: pointer; }
+.rfin-distribution-legend button:hover { background: #f1f6ff; }
+.rfin-distribution-legend button[aria-pressed="true"] { border-color: #d3e2fc; background: #f0f6ff; }
+.rfin-distribution-legend button > span:first-child { display: flex; align-items: center; gap: 7px; }
+.rfin-distribution-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.rfin-distribution-legend button > span:nth-child(2) { text-align: right; color: #6d8099; font-size: 10px; }
+.rfin-distribution-legend strong { font-size: 11px; font-weight: 700; text-align: right; white-space: nowrap; }
+.rfin-trend { display: flex; flex-direction: column; padding: 10px 10px 5px; }
+.rfin-trend-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rfin-trend-heading h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: -.3px; }
+.rfin-icon-button { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border: 1px solid #e6edf6; border-radius: 5px; color: #71849e; background: #fff; cursor: pointer; }
+.rfin-icon-button:hover { color: #0866ff; background: #eff6ff; }
+.rfin-trend-tabs { display: inline-flex; align-self: flex-start; background: #f0f4f9; border-radius: 6px; padding: 2px; margin: 7px 0 3px; gap: 1px; }
+.rfin-trend-tabs button { display: block; border: 0; padding: 4px 7px; border-radius: 4px; color: #536782; background: transparent; font-size: 10px; line-height: 1.15; cursor: pointer; }
+.rfin-trend-tabs button[aria-pressed="true"] { color: #fff; background: #0969fa; font-weight: 700; }
+.rfin-trend-body { display: flex; flex: 1; min-height: 0; gap: 4px; align-items: stretch; }
+.rfin-trend-canvas { flex: 1; min-width: 0; min-height: 130px; }
+.rfin-trend-legend { display: flex; flex-direction: column; justify-content: center; gap: 12px; margin: 0; padding: 0 1px 10px 0; width: 103px; flex-shrink: 0; list-style: none; }
+.rfin-trend-legend li { display: flex; align-items: center; gap: 6px; color: #3d516c; font-size: 10px; line-height: 1.25; }
+.rfin-trend-legend i { display: block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rfin-takeaway { display: flex; flex-direction: column; padding: 10px 12px; }
+.rfin-takeaway h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid #edf1f7; font-size: 13px; font-weight: 700; line-height: 1.1; }
+.rfin-round-icon { display: inline-flex; width: 27px; height: 27px; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; background: #eaf1ff; color: #3178ed; }
+.rfin-takeaway-total { display: block; color: #073d87; font-size: clamp(22px, 1.7vw, 29px); line-height: 1.1; letter-spacing: -.7px; font-weight: 700; white-space: nowrap; }
+.rfin-takeaway > p { margin: 6px 0 0; color: #31475f; font-size: 11px; line-height: 1.45; }
+.rfin-takeaway b { font-weight: 700; color: #17283f; }
+.rfin-takeaway-callout { display: flex; align-items: flex-start; gap: 8px; background: #eff9ff; border: 1px solid #d9edf9; border-radius: 6px; padding: 8px; margin-top: auto; color: #184979; font-size: 11px; line-height: 1.4; }
+.rfin-takeaway-callout > svg { flex-shrink: 0; color: #128ed7; margin-top: 1px; }
+.rfin-bottom-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 8px; min-height: 0; }
+.rfin-savings { display: flex; flex-direction: column; padding: 11px 12px 9px; }
+.rfin-savings-heading { display: flex; align-items: flex-start; gap: 7px; padding-bottom: 10px; border-bottom: 1px solid #edf1f7; }
+.rfin-savings-icon { display: flex; align-items: center; justify-content: center; width: 29px; height: 29px; border-radius: 50%; background: #d9f9ed; color: #10b58a; flex-shrink: 0; }
+.rfin-savings-heading > div:nth-child(2) { flex: 1; min-width: 0; }
+.rfin-savings-title { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rfin-savings-title h2 { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.2; letter-spacing: -.4px; }
+.rfin-total-value { display: inline-flex; align-items: baseline; gap: 3px; padding: 3px 6px; color: #608978; background: #e5fbf3; border: 1px solid #c0f1e0; border-radius: 20px; font-size: 8px; line-height: 1.2; white-space: nowrap; }
+.rfin-total-value b { color: #07967b; font-size: 10px; }
+.rfin-savings-heading p { margin: 5px 0 0; color: var(--rfin-muted); font-size: 10px; line-height: 1.3; }
+.rfin-priority-filter { display: flex; align-items: center; gap: 3px; align-self: center; flex-shrink: 0; }
+.rfin-priority-filter > span { font-size: 10px; color: #71839c; margin-right: 3px; }
+.rfin-priority-filter button { background: transparent; border: 0; color: #52657f; font-size: 10px; border-radius: 4px; padding: 4px 6px; cursor: pointer; line-height: 1; }
+.rfin-priority-filter button[aria-pressed="true"] { color: #fff; background: #0d213d; }
+.rfin-table-wrap { flex: 1; min-height: 0; overflow: auto; margin-top: 3px; }
+.rfin-savings-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+.rfin-savings-table th { padding: 8px 5px; font-size: 9px; font-weight: 700; color: #6d8098; text-transform: uppercase; border-bottom: 1px solid #eaf0f7; white-space: nowrap; }
+.rfin-savings-table td { padding: 7px 5px; border-bottom: 1px solid #edf2f8; line-height: 1.25; }
+.rfin-savings-table th:first-child, .rfin-savings-table td:first-child { padding-left: 2px; }
+.rfin-savings-table th:last-child, .rfin-savings-table td:last-child { text-align: center; }
+.rfin-savings-table tbody td:first-child { font-weight: 600; }
+.rfin-savings-table tbody td:nth-child(2) { color: #647891; }
+.rfin-savings-table tbody td:nth-child(3) { white-space: nowrap; font-weight: 700; }
+.rfin-savings-table tbody tr:hover { background: #f7faff; }
+.rfin-savings-table tfoot { background: #f0faf7; }
+.rfin-savings-table tfoot td { padding-top: 8px; padding-bottom: 8px; border-bottom: 0; }
+.rfin-savings-table tfoot td:first-child { text-transform: uppercase; font-size: 10px; font-weight: 700; }
+.rfin-savings-table tfoot td:nth-child(2) { color: #0b987e; font-weight: 700; white-space: nowrap; }
+.rfin-savings-table tfoot td:last-child { color: #73869c; font-size: 10px; white-space: nowrap; }
+.rfin-priority { display: inline-flex; align-items: center; justify-content: center; padding: 3px 7px; min-width: 43px; color: #fff; border-radius: 4px; font-size: 10px; line-height: 1; }
+.rfin-priority-high { background: #fa3158; }
+.rfin-priority-medium { background: #ffa512; }
+.rfin-priority-low { background: #60768f; }
+.rfin-assumptions { display: flex; flex-direction: column; padding: 11px 10px 8px; }
+.rfin-assumptions-heading { display: flex; align-items: center; gap: 7px; }
+.rfin-assumptions-heading > div:nth-child(2) { flex: 1; min-width: 0; }
+.rfin-assumptions-heading h2 { font-size: 13px; line-height: 1.2; font-weight: 700; margin: 0; letter-spacing: -.3px; }
+.rfin-assumptions-heading p { display: flex; align-items: center; gap: 4px; margin: 4px 0 0; color: #4d657f; font-size: 9px; flex-wrap: wrap; }
+.rfin-assumptions-heading p > svg { color: #09a1a4; }
+.rfin-sample-label { font-size: 6px; color: #7e90a6; background: #f0f5fa; border: 1px solid #e2eaf3; border-radius: 3px; padding: 2px 3px; letter-spacing: .3px; }
+.rfin-assumption-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.rfin-assumption-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 8px; border: 1px solid #e3eaf4; border-radius: 5px; background: #fff; color: #566d88; font-size: 10px; font-weight: 600; cursor: pointer; }
+.rfin-assumption-actions .rfin-save-button { color: #2672dc; border-color: #d6e6fd; background: #edf5ff; }
+.rfin-assumption-actions button:hover { border-color: #a7c8fa; background: #f0f6ff; }
+.rfin-assumption-zones { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; flex: 1; min-height: 0; margin-top: 11px; }
+.rfin-assumption-zone { display: flex; flex-direction: column; margin: 0; padding: 5px 9px; border: 1px solid #e7eef6; border-radius: 6px; }
+.rfin-zone-0 { background: #f3f7fd; }
+.rfin-zone-1 { background: #f0faf6; }
+.rfin-assumption-zone > div { display: flex; align-items: center; justify-content: space-between; gap: 7px; flex: 1; min-height: 32px; padding: 5px 0; border-bottom: 1px solid #e5edf3; }
+.rfin-assumption-zone > div:last-child { border-bottom: 0; }
+.rfin-assumption-zone dt { color: #526780; font-size: 10px; line-height: 1.4; }
+.rfin-assumption-zone dd { margin: 0; color: #22354e; text-align: right; font-size: 10px; font-weight: 700; line-height: 1.4; }
+.rfin-storage-note { color: #8997aa; font-size: 8px; line-height: 1.2; margin: 7px 0 0; }
+.rfin-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 8px; padding: 12px 17px; max-width: 90vw; background: #061431; color: #fff; border-radius: 8px; font-size: 12px; box-shadow: 0 5px 20px #06143120; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.rfin-toast-visible { opacity: 1; }
+.rfin-toast svg { color: #3ee0a2; flex-shrink: 0; }
+.rfin-dialog { margin: auto; padding: 0; width: min(580px, 94vw); max-height: 90vh; border: 1px solid #e3ebf5; border-radius: 14px; box-shadow: 0 25px 80px #041d4540; background: #fff; color: #17253b; font-family: Arial, 'Segoe UI', sans-serif; }
+.rfin-dialog-wide { width: min(930px, 94vw); }
+.rfin-dialog::backdrop { background: #051830ad; backdrop-filter: blur(3px); }
+.rfin-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 20px; border-bottom: 1px solid #e8eef6; }
+.rfin-dialog-heading h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.rfin-dialog-heading p { margin: 5px 0 0; color: #7c8ca3; font-size: 11px; line-height: 1.4; }
+.rfin-dialog-heading button { padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 0; background: #f2f6fb; color: #677b96; border-radius: 7px; flex-shrink: 0; cursor: pointer; }
+.rfin-dialog-body { padding: 16px; }
+.rfin-edit-intro { margin: 0 0 15px; color: #71859e; font-size: 12px; }
+.rfin-edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.rfin-edit-grid label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+.rfin-edit-grid label > span { min-width: 0; }
+.rfin-edit-grid small { display: block; margin-top: 4px; color: #8796ab; font-size: 10px; }
+.rfin-edit-grid input { width: 135px; min-width: 0; padding: 8px; border: 1px solid #dce6f2; background: #f8faff; color: #223951; border-radius: 6px; font: inherit; flex-shrink: 0; }
+.rfin-edit-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 18px; margin-top: 18px; border-top: 1px solid #e9eff7; }
+.rfin-edit-footer button { padding: 9px 13px; background: #fff; border: 1px solid #dee8f3; color: #526983; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.rfin-edit-footer .rfin-reset-button { margin-right: auto; }
+.rfin-edit-footer .rfin-primary-button { background: #0866ff; border-color: #0866ff; color: #fff; }
+.rfin-edit-error { margin: 15px 0 0; font-size: 12px; line-height: 1.4; color: #dc3050; }
+.rfin-expanded-trend { height: min(460px, 60vh); display: flex; margin-top: 12px; }
+.rfin-expanded-trend .rfin-trend-legend { width: 145px; }
+.rfin-expanded-trend .rfin-trend-legend li { font-size: 12px; }
+.rfin-insight-list { list-style: none; margin: 0; padding: 5px; display: grid; gap: 20px; }
+.rfin-insight-list li { display: flex; gap: 10px; align-items: flex-start; }
+.rfin-insight-list svg { color: #2186e5; flex-shrink: 0; }
+.rfin-insight-list strong { font-size: 13px; font-weight: 600; }
+.rfin-insight-list p { color: #75879e; font-size: 12px; line-height: 1.5; margin: 5px 0 0; }
+.robo-finance-root button:focus-visible, .rfin-dialog button:focus-visible, .rfin-dialog input:focus-visible { outline: 2px solid #1476f5; outline-offset: 2px; }
+
+@container (min-width: 1450px) {
+  .rfin-layout { grid-template-rows: 116px minmax(260px, 1fr) minmax(320px, 1.15fr); min-height: 712px; }
+  .rfin-kpi h2 { font-size: 14px; }
+  .rfin-kpi p { font-size: 12px; }
+  .rfin-simple-heading, .rfin-trend-heading h2, .rfin-takeaway h2, .rfin-savings-title h2, .rfin-assumptions-heading h2 { font-size: 15px; }
+  .rfin-distribution-legend button { font-size: 13px; grid-template-columns: minmax(0, 1fr) 46px 75px; }
+  .rfin-distribution-legend button > span:nth-child(2), .rfin-distribution-legend strong { font-size: 12px; }
+  .rfin-takeaway > p, .rfin-takeaway-callout { font-size: 13px; }
+  .rfin-savings-table { font-size: 13px; }
+  .rfin-savings-table th { font-size: 11px; }
+  .rfin-assumption-zone dt, .rfin-assumption-zone dd { font-size: 12px; }
+  .rfin-assumptions-heading p { font-size: 11px; }
+}
+
+@container (max-width: 1050px) {
+  .rfin-layout { height: auto; min-height: 0; grid-template-rows: auto auto auto; }
+  .rfin-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rfin-kpi { min-height: 110px; }
+  .rfin-visual-grid { grid-template-columns: 1fr 1fr; }
+  .rfin-visual-grid > .rfin-panel { min-height: 285px; }
+  .rfin-takeaway { grid-column: 1 / -1; min-height: 210px !important; }
+  .rfin-takeaway-callout { margin-top: 12px; }
+  .rfin-bottom-grid { grid-template-columns: 1fr; }
+  .rfin-bottom-grid > .rfin-panel { min-height: 300px; }
+  .rfin-savings-table { font-size: 12px; }
+  .rfin-savings-table td { padding: 11px 5px; }
+  .rfin-assumption-zone dt, .rfin-assumption-zone dd { font-size: 12px; }
+  .rfin-trend-legend { width: 85px; }
+  .rfin-distribution-body { gap: 10px; padding: 10px; }
+  .rfin-distribution-legend { gap: 13px; }
+  .rfin-distribution-legend button { grid-template-columns: minmax(0, 1fr) 36px 57px; gap: 4px; font-size: 10px; }
+}
+
+@container (max-width: 600px) {
+  .rfin-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rfin-kpi-grid > .rfin-kpi:last-child { grid-column: 1 / -1; }
+  .rfin-kpi { padding: 10px; min-height: 115px; }
+  .rfin-kpi h2 { gap: 6px; font-size: 10px; }
+  .rfin-kpi h2 > span { width: 23px; height: 23px; }
+  .rfin-kpi > strong { font-size: 19px; letter-spacing: -.65px; }
+  .rfin-kpi p { font-size: 9px; }
+  .rfin-visual-grid { grid-template-columns: 1fr; }
+  .rfin-takeaway { grid-column: auto; }
+  .rfin-distribution-body { flex-wrap: wrap; justify-content: center; gap: 13px; }
+  .rfin-donut { width: 155px; }
+  .rfin-distribution-legend { width: 100%; flex: 1 0 100%; gap: 8px; }
+  .rfin-distribution-legend button { font-size: 11px; grid-template-columns: minmax(0, 1fr) 44px 66px; }
+  .rfin-distribution { min-height: 365px !important; }
+  .rfin-savings-heading { flex-wrap: wrap; }
+  .rfin-savings-heading > div:nth-child(2) { flex: 1 0 calc(100% - 36px); }
+  .rfin-savings-title { gap: 5px; }
+  .rfin-priority-filter { margin-left: auto; flex-basis: 100%; justify-content: flex-end; }
+  .rfin-savings-table { min-width: 590px; }
+  .rfin-assumption-zones { grid-template-columns: 1fr; }
+  .rfin-assumption-zone > div { min-height: 43px; }
+  .rfin-assumption-zone dt, .rfin-assumption-zone dd { font-size: 11px; }
+  .rfin-assumptions-heading { flex-wrap: wrap; }
+  .rfin-assumption-actions { margin-left: auto; }
+  .rfin-assumptions-heading h2 { font-size: 13px; }
+  .rfin-assumptions-heading p { font-size: 8px; }
+  .rfin-sample-label { font-size: 5px; }
+  .rfin-storage-note { font-size: 9px; line-height: 1.4; }
+  .rfin-trend-tabs button { padding: 5px 6px; font-size: 9px; }
+}
+
+@media (max-width: 640px) {
+  .rfin-edit-grid { grid-template-columns: 1fr; gap: 13px; }
+  .rfin-dialog-heading { padding: 14px; }
+  .rfin-dialog-body { padding: 13px; }
+  .rfin-edit-grid input { width: 115px; }
+  .rfin-edit-footer { flex-wrap: wrap; }
+  .rfin-edit-footer .rfin-reset-button { flex: 1 0 100%; margin: 0; }
+  .rfin-edit-footer button { flex: 1; }
+  .rfin-expanded-trend .rfin-trend-legend { width: 90px; }
+  .rfin-expanded-trend .rfin-trend-legend li { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rfin-toast { transition: none; }
+}

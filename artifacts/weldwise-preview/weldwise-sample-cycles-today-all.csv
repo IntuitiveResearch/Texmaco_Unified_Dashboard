@@ -1,0 +1,21 @@
+Data source,Cycle,Start time,Duration (s),Avg welding current (A),Latest current (A),Status
+Sample data,393,09:44:00,37.1,26.5,45.2,Normal
+Sample data,394,09:45:17,37.8,27.1,46.0,Normal
+Sample data,395,09:46:34,38.5,27.7,46.8,Normal
+Sample data,396,09:47:51,39.2,28.3,47.6,Normal
+Sample data,397,09:48:08,39.9,26.5,48.4,Normal
+Sample data,398,09:49:25,37.1,27.1,49.2,Abnormal
+Sample data,399,09:50:42,37.8,27.7,45.2,Normal
+Sample data,400,09:51:59,38.5,28.3,46.0,Normal
+Sample data,401,09:52:16,39.2,26.5,46.8,Normal
+Sample data,402,09:53:33,39.9,27.1,47.6,Normal
+Sample data,403,09:54:50,37.1,27.7,48.4,Normal
+Sample data,404,09:55:07,37.8,28.3,49.2,Deviation
+Sample data,405,09:56:24,38.5,26.5,45.2,Normal
+Sample data,406,10:11:12,38.2,27.6,48.1,Normal
+Sample data,407,10:13:05,37.9,27.1,46.8,Normal
+Sample data,408,10:15:02,39.1,28.4,49.3,Normal
+Sample data,409,10:17:10,36.8,26.9,45.7,Normal
+Sample data,410,10:19:03,38.7,27.8,47.9,Normal
+Sample data,411,10:20:56,39.0,27.5,48.6,Deviation
+Sample data,412,10:23:14,40.2,21.3,34.1,Abnormal

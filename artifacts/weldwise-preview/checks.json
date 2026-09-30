@@ -1,0 +1,115 @@
+{
+  "desktop": {
+    "viewport": [
+      1600,
+      800
+    ],
+    "page": [
+      1392,
+      730
+    ],
+    "content": [
+      1392,
+      730
+    ],
+    "gauges": 5,
+    "rows": 7,
+    "canvas": true,
+    "image": true
+  },
+  "healthCards": true,
+  "previewScores": true,
+  "oldTopGaugesHidden": true,
+  "roboLabels": true,
+  "healthColorsPreserved": true,
+  "healthStyleMatchesEnergy": true,
+  "abnormalFilter": true,
+  "resetFilter": true,
+  "cycleDialog": true,
+  "chartDialog": true,
+  "zoomIn": true,
+  "zoomReset": true,
+  "lastHour": true,
+  "notifications": true,
+  "escapeClosesDialog": true,
+  "yesterday": true,
+  "refresh": true,
+  "noNewWeldingRequests": true,
+  "laptop": {
+    "viewport": [
+      1366,
+      768
+    ],
+    "page": [
+      1158,
+      698
+    ],
+    "content": [
+      1158,
+      698
+    ],
+    "gauges": 5,
+    "rows": 7,
+    "canvas": true,
+    "image": true
+  },
+  "tablet": {
+    "viewport": [
+      1024,
+      768
+    ],
+    "page": [
+      804,
+      662
+    ],
+    "content": [
+      804,
+      1383
+    ],
+    "gauges": 5,
+    "rows": 7,
+    "canvas": true,
+    "image": true
+  },
+  "mobile": {
+    "viewport": [
+      390,
+      844
+    ],
+    "page": [
+      328,
+      703
+    ],
+    "content": [
+      328,
+      2641
+    ],
+    "gauges": 5,
+    "rows": 7,
+    "canvas": true,
+    "image": true,
+    "documentOverflow": false,
+    "healthCardsDoNotOverlap": true
+  },
+  "O&M Dashboard": true,
+  "Executive Dashboard": true,
+  "Financial Dashboard": true,
+  "returnToWeldwise": true,
+  "roboOmRoute": true,
+  "requestsDuringRoboSwitch": [
+    "CMP#02"
+  ],
+  "roboOmNoApiRequests": true,
+  "roboOmDateOptions": true,
+  "roboOmYesterday": true,
+  "roboOmRefresh": true,
+  "roboOmNotifications": true,
+  "consistentHealthBetweenEntryPoints": true,
+  "sharedWeldingDatePreset": true,
+  "legacy O&M Compressor 1": true,
+  "legacy O&M Compressor 2": true,
+  "legacy O&M CNC 1": true,
+  "savedRoboOmRoute": true,
+  "savedRoboOmNoApiRequests": true,
+  "errors": []
+}
