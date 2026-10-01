@@ -31,6 +31,7 @@ import {
 import cmp01Img from './assets/CMP01.jpeg';
 import cmp02Img from './assets/CMP02.jpeg';
 import cnc01Img from './assets/CNC01.jpeg';
+import robo01Img from '../../assets/weldwise-robotic-cell.jpg';
 
 import { CurrentAveragePeakChart } from './components/charts/CurrentAveragePeakChart';
 import { CurrentMedianP95Chart } from './components/charts/CurrentMedianP95Chart';
@@ -51,6 +52,8 @@ type ExpandedChartKey = 'utilization' | 'availability' | 'thermal' | 'interrupts
 
 const CNC_ASSET_LABEL = 'CNC#01';
 const CNC_API_COMPRESSOR = 'MACHINE#PI4G/TXMCNCI/26001';
+const ROBO_ASSET_LABEL = 'ROBO#01';
+const ROBO_API_COMPRESSOR = 'MACHINE#PI4G/TXMMIGI/26001';
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
 const toFiniteNumber = (value: unknown): number => {
@@ -93,7 +96,7 @@ const sumBy = <T,>(items: T[], selector: (item: T) => unknown): number => (
 const createVisualSummary = (
   summary: DashboardData['summary'],
   graphs: DashboardData['graphs'],
-  isCncAsset: boolean,
+  isCncOrRobo: boolean,
   visualDates: Set<string>
 ): DashboardData['summary'] => {
   const runtimeRows = filterByVisualDates(graphs.runtime_distribution, visualDates);
@@ -105,17 +108,17 @@ const createVisualSummary = (
   const idleSeconds = sumBy(runtimeRows, (item) => item.idle);
   const visualSummary = {
     ...summary,
-    runtime_seconds: runtimeSeconds,
-    downtime_seconds: downtimeSeconds,
+    runtime_seconds: runtimeSeconds > 0 ? runtimeSeconds : summary.runtime_seconds,
+    downtime_seconds: downtimeSeconds > 0 ? downtimeSeconds : summary.downtime_seconds,
     offline_seconds: offlineSeconds,
   };
 
-  if (isCncAsset) {
+  if (isCncOrRobo) {
     const cycleRows = filterByVisualDates(graphs.cycle_count, visualDates);
 
     return {
       ...visualSummary,
-      idle_seconds: idleSeconds,
+      idle_seconds: idleSeconds > 0 ? idleSeconds : summary.idle_seconds,
       availability: summary.availability,
       avg_utilization: summary.avg_utilization,
       cycle_count: cycleRows.length > 0 ? sumBy(cycleRows, (item) => item.cycle_count) : summary.cycle_count,
@@ -144,10 +147,10 @@ const createVisualSummary = (
 const getAverageUtilization = (
   summary: DashboardData['summary'],
   graphs: DashboardData['graphs'],
-  isCncAsset: boolean,
+  isCncOrRobo: boolean,
   visualDates: Set<string>
 ): number => {
-  if (isCncAsset) {
+  if (isCncOrRobo) {
     return toFiniteNumber(summary.avg_utilization);
   }
 
@@ -171,9 +174,11 @@ const PLANT_ID_MAP: Record<string, string> = {
   'CMP#01': '011885',
   'CMP#02': '011884',
   'CNC#01': 'CN60I1626089',
+  'ROBO#01': 'PI4G/TXMMIGI/26001',
   'CMP01': '011885',
   'CMP02': '011884',
-  'CNC01': 'CN60I1626089'
+  'CNC01': 'CN60I1626089',
+  'ROBO01': 'PI4G/TXMMIGI/26001',
 };
 
 const ASSET_IMAGE_MAP: Record<string, string> = {
@@ -182,7 +187,9 @@ const ASSET_IMAGE_MAP: Record<string, string> = {
   'CMP#02': cmp02Img,
   'CMP02': cmp02Img,
   'CNC#01': cnc01Img,
-  'CNC01': cnc01Img
+  'CNC01': cnc01Img,
+  'ROBO#01': robo01Img,
+  'ROBO01': robo01Img,
 };
 
 export default function App() {
@@ -201,8 +208,14 @@ export default function App() {
   const [preset, setPreset] = useState('30d');
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const isCncAsset = compressor === CNC_ASSET_LABEL;
-  const requestCompressor = isCncAsset ? CNC_API_COMPRESSOR : compressor;
+  const isRoboAsset = compressor === ROBO_ASSET_LABEL || compressor.includes('ROBO');
+  const isCncAsset = compressor === CNC_ASSET_LABEL || compressor.includes('CNC');
+  const isCncOrRobo = isCncAsset || isRoboAsset;
+  const requestCompressor = isRoboAsset
+    ? ROBO_API_COMPRESSOR
+    : isCncAsset
+    ? CNC_API_COMPRESSOR
+    : compressor;
 
   useEffect(() => {
     if (theme === 'light') {
@@ -374,11 +387,11 @@ export default function App() {
     availability: filterByVisualDates(rawGraphs.availability, visualDateSet),
     cycle_count: filterByVisualDates(rawGraphs.cycle_count, visualDateSet),
   };
-  const summary = createVisualSummary(rawSummary, rawGraphs, isCncAsset, visualDateSet);
-  const managementAlerts = isCncAsset ? [] : getManagementAlerts(summary, graphs.thermal_rates);
-  const avgUtilization = getAverageUtilization(summary, graphs, isCncAsset, visualDateSet);
+  const summary = createVisualSummary(rawSummary, rawGraphs, isCncOrRobo, visualDateSet);
+  const managementAlerts = isCncOrRobo ? [] : getManagementAlerts(summary, graphs.thermal_rates);
+  const avgUtilization = getAverageUtilization(summary, graphs, isCncOrRobo, visualDateSet);
   const visualDayCount = Math.max(visualDateSet.size, graphs.runtime_distribution.length);
-  const dashboardTitle = isCncAsset ? 'Duce Pack Cutter Dashboard' : 'Compressor Management Dashboard';
+  const dashboardTitle = isRoboAsset ? 'Robotic Welder Dashboard' : isCncAsset ? 'Duce Pack Cutter Dashboard' : 'Compressor Management Dashboard';
 
   const expandedChartConfig = expandedChart === 'utilization'
     ? {
@@ -394,7 +407,7 @@ export default function App() {
           ? <AvailabilityTrendChart data={graphs.availability} showPointLabels />
           : <div className="flex items-center justify-center h-full text-zinc-500">No Data Available</div>
       }
-      : expandedChart === 'thermal' && !isCncAsset
+      : expandedChart === 'thermal' && !isCncOrRobo
         ? {
           title: 'Heating vs Cooling Velocity',
           subtitle: 'How quickly the compressor heats and cools.',
@@ -402,9 +415,9 @@ export default function App() {
         }
         : expandedChart === 'interrupts'
           ? {
-            title: isCncAsset ? 'Production Cycle' : 'Interrupt Cycles',
-            subtitle: isCncAsset ? 'Daily production cycle count.' : 'Equipment reliability metrics and run cycle health.',
-            content: isCncAsset
+            title: isCncOrRobo ? 'Production Cycle' : 'Interrupt Cycles',
+            subtitle: isCncOrRobo ? 'Daily production cycle count.' : 'Equipment reliability metrics and run cycle health.',
+            content: isCncOrRobo
               ? <ReliabilityChart data={graphs.cycle_count || []} valueKey="cycle_count" barName="Production Cycles" showBarLabels />
               : <ReliabilityChart data={graphs.reliability} showBarLabels />
           }
@@ -449,6 +462,7 @@ export default function App() {
                 <option value="CMP#01">CMP#01</option>
                 <option value="CMP#02">CMP#02</option>
                 <option value={CNC_ASSET_LABEL}>{CNC_ASSET_LABEL}</option>
+                <option value={ROBO_ASSET_LABEL}>{ROBO_ASSET_LABEL}</option>
               </select>
             </div>
 
@@ -509,7 +523,7 @@ export default function App() {
         </div>
 
         {/* KPI Grid */}
-        <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 ${isCncAsset ? 'xl:grid-cols-6' : 'xl:grid-cols-7'} gap-2.5 mb-3`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 ${isCncOrRobo ? 'xl:grid-cols-6' : 'xl:grid-cols-7'} gap-2.5 mb-3`}>
           <KPICard
             title="Availability"
             value={formatPercent(summary.availability)}
@@ -522,10 +536,10 @@ export default function App() {
             colorTheme="cyan"
             icon={<Zap size={15} />}
           />
-          {isCncAsset ? (
+          {isCncOrRobo ? (
             <>
               <KPICard
-                title="Arc Time"
+                title={isRoboAsset ? "Arc Time" : "Runtime"}
                 value={(summary.runtime_seconds / 3600).toFixed(1) + ' h'}
                 colorTheme="emerald"
                 icon={<Power size={15} />}
@@ -586,26 +600,26 @@ export default function App() {
         </div>
 
         {/* Row 2: Daily Runtime Distribution Chart + Equipment Image Card */}
-        <div className={`grid grid-cols-1 ${isCncAsset ? 'xl:grid-cols-6' : 'xl:grid-cols-7'} gap-3 mb-3`}>
+        <div className={`grid grid-cols-1 ${isCncOrRobo ? 'xl:grid-cols-6' : 'xl:grid-cols-7'} gap-3 mb-3`}>
           <ChartCard
-            title={isCncAsset ? "Daily Running vs Idle vs Downtime" : "Daily Runtime vs Downtime vs Utilization"}
+            title={isCncOrRobo ? "Daily Running vs Idle vs Downtime" : "Daily Runtime vs Downtime vs Utilization"}
             subtitle={
               <div className="flex items-center gap-2 mt-2 mb-1 flex-wrap">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[color-mix(in_srgb,var(--emerald)_20%,transparent)] text-[var(--emerald)] border border-[color-mix(in_srgb,var(--emerald)_30%,transparent)] uppercase tracking-wider">
-                  {isCncAsset ? 'running' : 'load'}
+                  {isCncOrRobo ? 'running' : 'load'}
                 </span>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[color-mix(in_srgb,var(--amber)_20%,transparent)] text-[var(--amber)] border border-[color-mix(in_srgb,var(--amber)_30%,transparent)] uppercase tracking-wider">
-                  {isCncAsset ? 'idle' : 'unload'}
+                  {isCncOrRobo ? 'idle' : 'unload'}
                 </span>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[color-mix(in_srgb,var(--coral)_20%,transparent)] text-[var(--coral)] border border-[color-mix(in_srgb,var(--coral)_30%,transparent)] uppercase tracking-wider">
                   downtime
                 </span>
               </div>
             }
-            className={isCncAsset ? "xl:col-span-4" : "xl:col-span-5"}
+            className={isCncOrRobo ? "xl:col-span-4" : "xl:col-span-5"}
             bodyClassName="min-h-[185px]"
           >
-            <RuntimeDistributionChart runtimeDistribution={graphs.runtime_distribution} utilization={graphs.utilization} mode={isCncAsset ? 'cnc' : 'compressor'} />
+            <RuntimeDistributionChart runtimeDistribution={graphs.runtime_distribution} utilization={graphs.utilization} mode={isCncOrRobo ? 'cnc' : 'compressor'} />
           </ChartCard>
 
           {/* Machine Photo Card - Width matching Interruptions & Alerts */}
@@ -682,7 +696,7 @@ export default function App() {
             {graphs.availability && <AvailabilityTrendChart data={graphs.availability} />}
           </ChartCard>
 
-          {!isCncAsset && (
+          {!isCncOrRobo && (
             <ChartCard
               title="Heating vs Cooling Velocity"
               subtitle="How quickly the compressor heats and cools."
@@ -694,19 +708,19 @@ export default function App() {
           )}
 
           <ChartCard
-            title={isCncAsset ? "Production Cycle" : "Interrupt Cycles"}
-            subtitle={isCncAsset ? "Daily production cycle count." : "Equipment reliability metrics and run cycle health."}
+            title={isCncOrRobo ? "Production Cycle" : "Interrupt Cycles"}
+            subtitle={isCncOrRobo ? "Daily production cycle count." : "Equipment reliability metrics and run cycle health."}
             bodyClassName="min-h-[118px]"
             onClick={() => setExpandedChart('interrupts')}
           >
-            {isCncAsset ? (
+            {isCncOrRobo ? (
               <ReliabilityChart data={graphs.cycle_count || []} valueKey="cycle_count" barName="Production Cycles" />
             ) : (
               <ReliabilityChart data={graphs.reliability} />
             )}
           </ChartCard>
 
-          {isCncAsset && (
+          {isCncOrRobo && (
             <ChartCard
               title={`Time Breakdown (${visualDayCount} Day${visualDayCount === 1 ? '' : 's'})`}
               subtitle="Running, idle, and downtime split."
@@ -718,7 +732,7 @@ export default function App() {
 
         </div>
 
-        <div className={`mt-3 grid grid-cols-1 ${isCncAsset ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-3`}>
+        <div className={`mt-3 grid grid-cols-1 ${isCncOrRobo ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-3`}>
           <ChartCard
             title="Worst 5 Days by Downtime"
             subtitle="Highest daily downtime during the selected period."
@@ -726,8 +740,8 @@ export default function App() {
           >
             <WorstDowntimeDaysChart data={graphs.runtime_distribution} />
           </ChartCard>
-          <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} />
-          {!isCncAsset && (
+          <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCnc={isCncOrRobo} />
+          {!isCncOrRobo && (
             <ChartCard
               title={`Time Breakdown (${visualDayCount} Day${visualDayCount === 1 ? '' : 's'})`}
               subtitle="Load, unload, and unplanned downtime split."

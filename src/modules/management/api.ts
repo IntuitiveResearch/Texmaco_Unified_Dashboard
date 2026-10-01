@@ -71,6 +71,7 @@ const asArray = <T>(value: unknown): T[] => Array.isArray(value) ? value : [];
 const normalizeDashboardData = (raw: any): DashboardData => {
   const graphs = raw?.graphs || {};
   const rawSummary = {
+    ...(graphs?.time_breakdown && typeof graphs.time_breakdown === 'object' && !Array.isArray(graphs.time_breakdown) ? graphs.time_breakdown : {}),
     ...(raw?.summary || {}),
     ...(raw?.availability !== undefined ? { availability: raw.availability } : {}),
   };
@@ -86,7 +87,11 @@ const normalizeDashboardData = (raw: any): DashboardData => {
       reliability: asArray(graphs.reliability),
       events: asArray(graphs.events),
       cycle_count: asArray(graphs.cycle_count),
-      time_breakdown: asArray(graphs.time_breakdown),
+      time_breakdown: Array.isArray(graphs.time_breakdown)
+        ? graphs.time_breakdown
+        : graphs.time_breakdown && typeof graphs.time_breakdown === 'object'
+        ? [graphs.time_breakdown]
+        : [],
       availability: asArray(graphs.availability),
     },
   };

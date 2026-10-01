@@ -87,7 +87,7 @@ const sumBy = <T,>(items: T[], selector: (item: T) => unknown): number => (
 const createVisualSummary = (
   summary: DashboardData['summary'],
   graphs: DashboardData['graphs'],
-  isCncAsset: boolean,
+  isCncOrRobo: boolean,
   visualDates: Set<string>
 ): DashboardData['summary'] => {
   const runtimeRows = filterByVisualDates(graphs.runtime_distribution, visualDates);
@@ -99,17 +99,17 @@ const createVisualSummary = (
   const idleSeconds = sumBy(runtimeRows, (item) => item.idle);
   const visualSummary = {
     ...summary,
-    runtime_seconds: runtimeSeconds,
-    downtime_seconds: downtimeSeconds,
+    runtime_seconds: runtimeSeconds > 0 ? runtimeSeconds : summary.runtime_seconds,
+    downtime_seconds: downtimeSeconds > 0 ? downtimeSeconds : summary.downtime_seconds,
     offline_seconds: offlineSeconds,
   };
 
-  if (isCncAsset) {
+  if (isCncOrRobo) {
     const cycleRows = filterByVisualDates(graphs.cycle_count, visualDates);
 
     return {
       ...visualSummary,
-      idle_seconds: idleSeconds,
+      idle_seconds: idleSeconds > 0 ? idleSeconds : summary.idle_seconds,
       availability: summary.availability,
       avg_utilization: summary.avg_utilization,
       cycle_count: cycleRows.length > 0 ? sumBy(cycleRows, (item) => item.cycle_count) : summary.cycle_count,
@@ -138,10 +138,10 @@ const createVisualSummary = (
 const getAverageUtilization = (
   summary: DashboardData['summary'],
   graphs: DashboardData['graphs'],
-  isCncAsset: boolean,
+  isCncOrRobo: boolean,
   visualDates: Set<string>
 ): number => {
-  if (isCncAsset) {
+  if (isCncOrRobo) {
     return toFiniteNumber(summary.avg_utilization);
   }
 
@@ -271,6 +271,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
 
     const isRoboAsset = compressor === ROBO_ASSET_LABEL || compressor.includes('ROBO');
     const isCncAsset = compressor === CNC_ASSET_LABEL || compressor.includes('CNC');
+    const isCncOrRobo = isCncAsset || isRoboAsset;
     const requestCompressor = isRoboAsset
       ? ROBO_API_COMPRESSOR
       : isCncAsset
@@ -340,18 +341,18 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
 
     const summary = useMemo(() => {
       if (!rawSummary || !rawGraphs) return null;
-      return createVisualSummary(rawSummary, rawGraphs, isCncAsset, visualDateSet);
-    }, [rawSummary, rawGraphs, isCncAsset, visualDateSet]);
+      return createVisualSummary(rawSummary, rawGraphs, isCncOrRobo, visualDateSet);
+    }, [rawSummary, rawGraphs, isCncOrRobo, visualDateSet]);
 
     const managementAlerts = useMemo(() => {
-      if (!graphs || !summary || isCncAsset) return [];
+      if (!graphs || !summary || isCncOrRobo) return [];
       return getManagementAlerts(summary, graphs.thermal_rates);
-    }, [graphs, summary, isCncAsset]);
+    }, [graphs, summary, isCncOrRobo]);
 
     const avgUtilization = useMemo(() => {
       if (!summary || !graphs) return 0;
-      return getAverageUtilization(summary, graphs, isCncAsset, visualDateSet);
-    }, [summary, graphs, isCncAsset, visualDateSet]);
+      return getAverageUtilization(summary, graphs, isCncOrRobo, visualDateSet);
+    }, [summary, graphs, isCncOrRobo, visualDateSet]);
 
     const visualDayCount = useMemo(() => {
       if (!graphs) return 0;
@@ -424,7 +425,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
               <div className="flex items-center justify-center h-full text-zinc-500">No Data Available</div>
             ),
           }
-        : expandedChart === 'thermal' && !isCncAsset
+        : expandedChart === 'thermal' && !isCncOrRobo
         ? {
             title: 'Heating vs Cooling Velocity',
             subtitle: 'How quickly the compressor heats and cools.',
@@ -432,9 +433,9 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
           }
         : expandedChart === 'interrupts'
         ? {
-            title: isCncAsset ? 'Production Cycle' : 'Interrupt Cycles',
-            subtitle: isCncAsset ? 'Daily production cycle count.' : 'Equipment reliability metrics and run cycle health.',
-            content: isCncAsset ? (
+            title: isCncOrRobo ? 'Production Cycle' : 'Interrupt Cycles',
+            subtitle: isCncOrRobo ? 'Daily production cycle count.' : 'Equipment reliability metrics and run cycle health.',
+            content: isCncOrRobo ? (
               <ReliabilityChart data={graphs.cycle_count || []} valueKey="cycle_count" barName="Production Cycles" showBarLabels />
             ) : (
               <ReliabilityChart data={graphs.reliability} showBarLabels />
@@ -449,7 +450,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
             {/* KPI Grid */}
             <div
               className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 ${
-                isCncAsset ? 'xl:grid-cols-6' : 'xl:grid-cols-7'
+                isCncOrRobo ? 'xl:grid-cols-6' : 'xl:grid-cols-7'
               } gap-1.5 2xl:gap-2 mb-1.5 shrink-0`}
             >
             <KPICard
@@ -464,10 +465,10 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
               colorTheme="cyan"
               icon={<Zap size={15} />}
             />
-            {isCncAsset ? (
+            {isCncOrRobo ? (
               <>
                 <KPICard
-                  title="Arc Time"
+                  title={isRoboAsset ? "Arc Time" : "Runtime"}
                   value={(summary.runtime_seconds / 3600).toFixed(1) + ' h'}
                   colorTheme="emerald"
                   icon={<Power size={15} />}
@@ -530,14 +531,14 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
           {/* Row 2: Daily Runtime Distribution Chart + Machine Header Card */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-1.5 2xl:gap-2 mb-1.5 flex-1 min-h-0">
             <ChartCard
-              title={isCncAsset ? 'Daily Running vs Idle vs Downtime' : 'Daily Runtime vs Downtime vs Utilization'}
+              title={isCncOrRobo ? 'Daily Running vs Idle vs Downtime' : 'Daily Runtime vs Downtime vs Utilization'}
               subtitle={
                 <div className="flex items-center gap-2 mt-0.5 mb-0.5 flex-wrap">
                   <span className="inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold bg-[color-mix(in_srgb,var(--emerald)_20%,transparent)] text-[var(--emerald)] border border-[color-mix(in_srgb,var(--emerald)_30%,transparent)] uppercase tracking-wider">
-                    {isCncAsset ? 'running' : 'load'}
+                    {isCncOrRobo ? 'running' : 'load'}
                   </span>
                   <span className="inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold bg-[color-mix(in_srgb,var(--amber)_20%,transparent)] text-[var(--amber)] border border-[color-mix(in_srgb,var(--amber)_30%,transparent)] uppercase tracking-wider">
-                    {isCncAsset ? 'idle' : 'unload'}
+                    {isCncOrRobo ? 'idle' : 'unload'}
                   </span>
                   <span className="inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold bg-[color-mix(in_srgb,var(--coral)_20%,transparent)] text-[var(--coral)] border border-[color-mix(in_srgb,var(--coral)_30%,transparent)] uppercase tracking-wider">
                     downtime
@@ -550,7 +551,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
               <RuntimeDistributionChart
                 runtimeDistribution={graphs.runtime_distribution}
                 utilization={graphs.utilization}
-                mode={isCncAsset ? 'cnc' : 'compressor'}
+                mode={isCncOrRobo ? 'cnc' : 'compressor'}
               />
             </ChartCard>
 
@@ -563,7 +564,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
                   name: compressor,
                   plant: 'Texmaco - Agarpara',
                   deviceId: compressor,
-                  type: isCncAsset ? 'CNC' : 'Compressor',
+                  type: isRoboAsset ? 'Robotic Welder' : isCncAsset ? 'CNC' : 'Compressor',
                   status: 'Running',
                 }}
                 runState={1}
@@ -601,7 +602,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
               {graphs.availability && <AvailabilityTrendChart data={graphs.availability} />}
             </ChartCard>
 
-            {!isCncAsset && (
+            {!isCncOrRobo && (
               <ChartCard
                 title="Heating vs Cooling Velocity"
                 subtitle="How quickly the compressor heats and cools."
@@ -614,20 +615,20 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
             )}
 
             <ChartCard
-              title={isCncAsset ? 'Production Cycle' : 'Interrupt Cycles'}
-              subtitle={isCncAsset ? 'Daily production cycle count.' : 'Equipment reliability metrics and run cycle health.'}
+              title={isCncOrRobo ? 'Production Cycle' : 'Interrupt Cycles'}
+              subtitle={isCncOrRobo ? 'Daily production cycle count.' : 'Equipment reliability metrics and run cycle health.'}
               className="flex flex-col h-full min-h-0"
               bodyClassName="min-h-0 flex-1 h-full"
               onClick={() => setExpandedChart('interrupts')}
             >
-              {isCncAsset ? (
+              {isCncOrRobo ? (
                 <ReliabilityChart data={graphs.cycle_count || []} valueKey="cycle_count" barName="Production Cycles" />
               ) : (
                 <ReliabilityChart data={graphs.reliability} />
               )}
             </ChartCard>
 
-            {isCncAsset && (
+            {isCncOrRobo && (
               <ChartCard
                 title={`Time Breakdown (${visualDayCount} Day${visualDayCount === 1 ? '' : 's'})`}
                 subtitle="Running, idle, and downtime split."
@@ -640,7 +641,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
           </div>
 
           {/* Row 4: Downtime, Alerts, Time Breakdown */}
-          <div className={`grid grid-cols-1 ${isCncAsset ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-1.5 2xl:gap-2 flex-1 min-h-0`}>
+          <div className={`grid grid-cols-1 ${isCncOrRobo ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-1.5 2xl:gap-2 flex-1 min-h-0`}>
             <ChartCard
               title="Worst 5 Days by Downtime"
               subtitle="Highest daily downtime during the selected period."
@@ -650,9 +651,9 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
               <WorstDowntimeDaysChart data={graphs.runtime_distribution} />
             </ChartCard>
 
-            <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCnc={isCncAsset} />
+            <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCnc={isCncOrRobo} />
 
-            {!isCncAsset && (
+            {!isCncOrRobo && (
               <ChartCard
                 title={`Time Breakdown (${visualDayCount} Day${visualDayCount === 1 ? '' : 's'})`}
                 subtitle="Load, unload, and unplanned downtime split."
@@ -698,7 +699,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
                 <div>
                   <h3 className="font-bold text-[17px] text-[var(--text)] m-0">{compressor} Equipment View</h3>
                   <p className="text-[12px] text-[var(--muted)] m-0 mt-0.5">
-                    {isCncAsset ? 'Duce Pack Cutter' : 'Air Compressor'} · Plant ID: {PLANT_ID_MAP[compressor] || 'N/A'}
+                    {isRoboAsset ? 'Robotic Welding Cell' : isCncAsset ? 'Duce Pack Cutter' : 'Air Compressor'} · Plant ID: {PLANT_ID_MAP[compressor] || 'N/A'}
                   </p>
                 </div>
                 <button

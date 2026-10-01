@@ -120,7 +120,7 @@ export interface DashboardData {
     reliability: Reliability[];
     events: Events[];
     cycle_count?: Array<{ date: string; cycle_count: number }>;
-    time_breakdown?: Array<Record<string, number>>;
+    time_breakdown?: Array<Record<string, number>> | Record<string, number>;
     availability?: Availability[];
   };
 }
