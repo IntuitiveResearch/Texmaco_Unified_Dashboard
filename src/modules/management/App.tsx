@@ -545,7 +545,7 @@ export default function App() {
                 icon={<Power size={15} />}
               />
               <KPICard
-                title="Idle Time"
+                title={isRoboAsset ? "Total Idle Time" : "Idle Time"}
                 value={(toFiniteNumber(summary.idle_seconds) / 3600).toFixed(1) + ' h'}
                 colorTheme="amber"
                 icon={<Battery size={15} />}
