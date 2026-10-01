@@ -79,7 +79,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               Executive Sign In
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Access O&M, Management & Financial Intelligence
+              Access the Asset Overview, O&M, Management & Financial Intelligence
             </p>
           </div>
 

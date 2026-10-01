@@ -42,6 +42,14 @@
     {
       "source": "/financial_intel",
       "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/financial_intel"
+    },
+    {
+      "source": "/api/welding",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/welding"
+    },
+    {
+      "source": "/welding",
+      "destination": "https://2zkaym7w85.execute-api.ap-south-1.amazonaws.com/welding"
     }
   ]
 }

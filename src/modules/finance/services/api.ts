@@ -239,7 +239,7 @@ export async function fetchFinancialIntel(
       const proxyResponse = await fetch(`/api/financial_intel?${query}`);
       if (proxyResponse.ok) {
         const data = await proxyResponse.json();
-        if (data && data.financial_exposure) {
+        if (data && typeof data.financial_exposure?.total_exposure === 'number') {
           resultData = data as FinancialIntelResponse;
         } else if (data && data.message) {
           throw new Error(data.message);
@@ -258,8 +258,8 @@ export async function fetchFinancialIntel(
       }
 
       const result = await directResponse.json();
-      if (result.message && !result.financial_exposure) {
-        throw new Error(result.message);
+      if (!result || typeof result.financial_exposure?.total_exposure !== 'number') {
+        throw new Error(result?.message || 'Financial API returned no exposure data');
       }
       resultData = result as FinancialIntelResponse;
     }

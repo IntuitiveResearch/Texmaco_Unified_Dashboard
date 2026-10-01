@@ -20,6 +20,7 @@ interface HeaderProps {
   currentTab: DashboardTab;
   selectedAsset: string;
   availableAssets: HeaderAsset[];
+  isSampleAsset?: boolean;
   onSelectAsset: (assetId: string) => void;
   onAssetMenuOpen?: () => void;
   datePreset?: string;
@@ -42,6 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentTab,
   selectedAsset,
   availableAssets,
+  isSampleAsset = false,
   onSelectAsset,
   onAssetMenuOpen,
   datePreset = '30days',
@@ -132,7 +134,16 @@ export const Header: React.FC<HeaderProps> = ({
 
   const getTitleAndSubtitle = () => {
     switch (currentTab) {
+      case 'overview':
+        return {
+          title: 'Plant Asset Overview',
+          subtitle: 'Real-Time Monitoring | Higher Productivity | Lower Cost | Smarter Operations',
+        };
       case 'om':
+        if (selectedAsset === 'CRANE#01') return {
+          title: 'EOT Crane Dashboard',
+          subtitle: 'Real-Time Vibration Monitoring | Structural Health | Predictive Maintenance',
+        };
         return {
           title: 'O&M Dashboard',
           subtitle: 'Real-Time Asset Monitoring | From Machine Data to Action',
@@ -209,7 +220,16 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Asset Selector */}
-          <div className="relative" ref={assetRef}>
+          {currentTab === 'om' && selectedAsset === 'CRANE#01' && (
+            <div className="hidden xl:flex items-center gap-2 bg-[#0c2250] border border-white/10 rounded-lg px-3 py-1.5 text-xs font-semibold text-white whitespace-nowrap">
+              Texmaco - Agarpara
+            </div>
+          )}
+          {currentTab === 'overview' ? (
+            <div className="flex items-center gap-2 bg-[#0c2250] border border-white/10 rounded-lg px-3 py-1.5 text-xs font-semibold text-white whitespace-nowrap">
+              Texmaco - Agarpara
+            </div>
+          ) : <div className="relative" ref={assetRef}>
             <button
               type="button"
               id="asset-selector-btn"
@@ -258,7 +278,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ))}
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Inline Custom Date Range Selector (Executive when 'custom' is active) */}
           {currentTab === 'management' && datePreset === 'custom' && (
@@ -289,7 +309,11 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Date Range Selector Dropdown */}
-          <div className="relative" ref={dateRef}>
+          {isSampleAsset ? null : currentTab === 'overview' ? (
+            <div className="flex items-center gap-1.5 bg-[#0c2250] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-200 whitespace-nowrap">
+              <Calendar className="w-3.5 h-3.5" /> Last 30 Days (30d)
+            </div>
+          ) : <div className="relative" ref={dateRef}>
             <button
               type="button"
               id="date-selector-btn"
@@ -394,7 +418,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Refresh Action */}
           {onRefresh && (

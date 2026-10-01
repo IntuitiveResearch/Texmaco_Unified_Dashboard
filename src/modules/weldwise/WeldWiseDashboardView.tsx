@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import weldingCellImage from '../../assets/weldwise-robotic-cell.jpg';
 import { HealthGauges } from '../om/components/HealthGauges';
+import { getRoboOverallHealth, ROBO_HEALTH_SCORES } from '../om/utils/overallHealth';
 import { getMockKpiData } from '../om/data/mockData';
 import { getCachedOperationalKpi } from '../om/services/kpiService';
 import type { DateRangePreset } from '../om/types';
@@ -648,7 +649,7 @@ export const WeldWiseDashboardView = forwardRef<WeldWiseDashboardRef, WeldWiseDa
             {[
               {
                 title: 'Overall Health',
-                score: 93,
+                score: getRoboOverallHealth(),
                 color: '#10bf83',
                 trackColor: '#d1fae5',
                 description: 'Running within normal limits',
@@ -656,7 +657,7 @@ export const WeldWiseDashboardView = forwardRef<WeldWiseDashboardRef, WeldWiseDa
               },
               {
                 title: 'Electrical Health',
-                score: 94,
+                score: ROBO_HEALTH_SCORES.electrical,
                 color: '#2378f2',
                 trackColor: '#dbeafe',
                 description: 'Stable electrical parameters',
@@ -664,7 +665,7 @@ export const WeldWiseDashboardView = forwardRef<WeldWiseDashboardRef, WeldWiseDa
               },
               {
                 title: 'Mechanical Health',
-                score: 92,
+                score: ROBO_HEALTH_SCORES.mechanical,
                 color: '#f59e0b',
                 trackColor: '#fef3c7',
                 description: 'Optimal vibration levels',
@@ -672,7 +673,7 @@ export const WeldWiseDashboardView = forwardRef<WeldWiseDashboardRef, WeldWiseDa
               },
               {
                 title: 'Thermal Health',
-                score: 95,
+                score: ROBO_HEALTH_SCORES.thermal,
                 color: '#ef4444',
                 trackColor: '#fee2e2',
                 description: 'Operating temperature normal',

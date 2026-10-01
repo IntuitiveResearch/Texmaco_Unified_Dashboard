@@ -3,10 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "description": "Centralized plant analytics platform for **Texmaco Rail & Engineering** (Agarpara Plant), integrating real-time telemetry, executive KPI analytics, and financial cost modeling.",
+  "homepage": "https://github.com/IntuitiveResearch/Texmaco_Unified_Dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/IntuitiveResearch/Texmaco_Unified_Dashboard/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IntuitiveResearch/Texmaco_Unified_Dashboard.git"
+  },
   "license": "ISC",
   "author": "",
   "type": "module",
   "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "tsc && vite build",

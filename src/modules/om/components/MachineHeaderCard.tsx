@@ -4,6 +4,7 @@ import { getCompressorImage, getAssetDisplayName } from '../utils/assetImages';
 import { AssetMeta } from '../types';
 import { COMPRESSOR_MODEL } from '../../../../shared/compressor-equipment.mjs';
 import { getAssetStatusAppearance, getOperatingStatus } from '../../../utils/assetStatus';
+import { MIG_ASSET_ID, MIG_ASSET_TAG } from '../data/migSample';
 
 interface MachineHeaderCardProps {
   compressorId: string;
@@ -35,11 +36,12 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
   const imageUrl = getCompressorImage(compressorId);
   const status = getAssetStatusAppearance(getOperatingStatus(runState, loadState, compressorId));
   const displayName = getAssetDisplayName(compressorId);
+  const isMig = compressorId === MIG_ASSET_ID || compressorId === MIG_ASSET_TAG;
   const isRobo =
-    compressorId === 'ROBO#01' ||
+    !isMig && (compressorId === 'ROBO#01' ||
     compressorId === 'ROBO01' ||
     compressorId?.toUpperCase()?.includes('ROBO') ||
-    compressorId?.includes('TXMMIGI');
+    compressorId?.includes('TXMMIGI'));
   const isCnc =
     !isRobo && (
       compressorId === 'CNC#01' ||
@@ -63,7 +65,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
           className="w-full h-full object-cover object-center"
         />
         <div className="absolute bottom-1 right-1 bg-slate-900/80 backdrop-blur-xs text-[9px] text-white px-1.5 py-0.2 rounded font-mono">
-          {isRobo ? 'PI4G/TXMMIGI/26001' : isCnc ? 'Duce Pack Cutter' : COMPRESSOR_MODEL}
+          {isMig ? 'PI4G/TXMMIGI/26002' : isRobo ? 'PI4G/TXMMIGI/26001' : isCnc ? 'Duce Pack Cutter' : COMPRESSOR_MODEL}
         </div>
       </div>
 
@@ -75,7 +77,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
             <span
               className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider shadow-2xs ${status.pillClass}`}
             >
-              {status.label.toUpperCase()}
+              {isMig && status.label === 'Stopped' ? 'OFF' : status.label.toUpperCase()}
             </span>
             {isRobo && (
               <span className="text-[8px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
@@ -102,7 +104,9 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
           <p className="text-[10px] sm:text-[10.5px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1 mt-0.5 truncate">
             <span className="text-emerald-500 font-bold">●</span>
             <span className="truncate">
-              {isRobo
+              {isMig
+                ? 'Fronius MIG 400 · MIG Welding Machine'
+                : isRobo
                 ? 'GMAW (MAG) · Robotic Welding System'
                 : isCnc
                 ? 'Duce Pack Cutter · Precision CNC System'
@@ -125,7 +129,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
             <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
             <span className="text-slate-500 dark:text-slate-400 text-[10px]">Location:</span>
             <span className="text-slate-800 dark:text-slate-200 font-semibold truncate">
-              {isRobo || isCnc ? 'CNC Machining Bay' : 'Compressor Room 1'}
+              {isMig ? 'Welding Bay' : isRobo || isCnc ? 'CNC Machining Bay' : 'Compressor Room 1'}
             </span>
           </div>
 
@@ -134,7 +138,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
               <Tag className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="text-slate-500 text-[10px]">Asset Tag:</span>
               <span className="text-slate-800 font-semibold truncate">
-                {isRobo ? 'MACHINE#PI4G/TXMMIGI/26001' : compressorId}
+                {isMig ? MIG_ASSET_TAG : isRobo ? 'MACHINE#PI4G/TXMMIGI/26001' : compressorId}
               </span>
             </div>
           )}
@@ -149,7 +153,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
 
           <div className="flex items-center gap-1.5 text-slate-400 text-[9.5px] font-normal truncate">
             <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-            <span className="truncate">Last Updated {formattedDate}</span>
+            <span className="truncate">{isMig ? 'Live telemetry unavailable' : `Last Updated ${formattedDate}`}</span>
           </div>
         </div>
       </div>

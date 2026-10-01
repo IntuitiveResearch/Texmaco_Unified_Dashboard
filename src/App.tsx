@@ -8,6 +8,11 @@ import { OmDashboardView, OmDashboardRef } from './modules/om/OmDashboardView';
 import { ManagementDashboardView, ManagementDashboardRef } from './modules/management/ManagementDashboardView';
 import { FinanceDashboardView, FinanceDashboardRef } from './modules/finance/FinanceDashboardView';
 import { useAssetStatuses } from './hooks/useAssetStatuses';
+import { AssetOverviewView } from './modules/overview/AssetOverviewView';
+import { CraneDashboardView } from './modules/crane/CraneDashboardView';
+import { CRANE_ASSET_STATUS } from './modules/crane/craneStatus';
+import { MigOmDashboardView } from './modules/om/MigOmDashboardView';
+import { MIG_ASSET_ID } from './modules/om/data/migSample';
 
 const ReportsPlaceholderView: React.FC = () => (
   <div className="flex-1 w-full p-4 lg:p-6 flex items-center justify-center">
@@ -68,6 +73,18 @@ const AVAILABLE_HEADER_ASSETS: HeaderAsset[] = [
     plant: 'Texmaco - Agarpara',
     status: 'Running',
   },
+  {
+    id: 'CRANE#01',
+    name: 'EOT Crane - Bay 1 (10 Ton)',
+    plant: 'Texmaco - Agarpara',
+    status: CRANE_ASSET_STATUS,
+  },
+  {
+    id: MIG_ASSET_ID,
+    name: 'MIG Welding Machine',
+    plant: 'Texmaco - Agarpara',
+    status: 'Stopped',
+  },
 ];
 
 export default function App() {
@@ -84,8 +101,8 @@ export default function App() {
     }
   });
 
-  // Default active tab to 'om' or 'management'
-  const [currentTab, setCurrentTab] = useState<DashboardTab>('om');
+  const [currentTab, setCurrentTab] = useState<DashboardTab>('overview');
+  const [overviewRefreshKey, setOverviewRefreshKey] = useState(0);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [selectedAsset, setSelectedAsset] = useState<string>(() => {
     const saved = localStorage.getItem('texmaco_selected_asset');
@@ -94,11 +111,15 @@ export default function App() {
 
   // Date presets per module
   const [omDatePreset, setOmDatePreset] = useState<string>('30days');
+  const [craneDatePreset, setCraneDatePreset] = useState<'today' | '7days' | '30days'>('7days');
+  const [craneRefreshKey, setCraneRefreshKey] = useState(0);
   const [mgmtDatePreset, setMgmtDatePreset] = useState<string>('30d');
   const [financeDatePreset, setFinanceDatePreset] = useState<string>('1m');
   const statusRangePreset = omDatePreset === 'today' ? 'today' : omDatePreset === '7days' ? '7days' : '30days';
   const { statuses: assetStatuses, reportRunState, refreshStatuses } = useAssetStatuses(isAuthenticated, statusRangePreset);
-  const headerAssets = AVAILABLE_HEADER_ASSETS.map(asset => ({ ...asset, status: assetStatuses[asset.id] ?? 'Unknown' }));
+  const headerAssets = AVAILABLE_HEADER_ASSETS
+    .filter(asset => currentTab === 'om' || (asset.id !== 'CRANE#01' && asset.id !== MIG_ASSET_ID))
+    .map(asset => ({ ...asset, status: asset.id === 'CRANE#01' ? CRANE_ASSET_STATUS : asset.id === MIG_ASSET_ID ? 'Stopped' : assetStatuses[asset.id] ?? 'Unknown' }));
 
   // Custom date range for Executive Dashboard
   const [customStartDate, setCustomStartDate] = useState<string>(
@@ -145,7 +166,12 @@ export default function App() {
   };
 
   const handleRefresh = () => {
-    if (currentTab === 'om' && omRef.current) {
+    if (currentTab === 'overview') {
+      setOverviewRefreshKey(previous => previous + 1);
+      void refreshStatuses();
+    } else if (currentTab === 'om' && selectedAsset === 'CRANE#01') {
+      setCraneRefreshKey(previous => previous + 1);
+    } else if (currentTab === 'om' && omRef.current) {
       omRef.current.refresh();
     } else if (currentTab === 'management' && managementRef.current) {
       managementRef.current.refresh();
@@ -158,6 +184,18 @@ export default function App() {
     setIsReportModalOpen(true);
   };
 
+  const handleOpenAsset = (assetId: string) => {
+    setSelectedAsset(assetId);
+    setCurrentTab('om');
+  };
+
+  const handleSelectTab = (tab: DashboardTab) => {
+    if ((tab === 'management' || tab === 'finance') && (selectedAsset === 'CRANE#01' || selectedAsset === MIG_ASSET_ID)) {
+      setSelectedAsset('CMP#02');
+    }
+    setCurrentTab(tab);
+  };
+
   // If user is not authenticated, render unified login screen
   if (!isAuthenticated) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
@@ -168,7 +206,7 @@ export default function App() {
       {/* Collapsible Left Sidebar */}
       <Sidebar
         currentTab={currentTab}
-        onSelectTab={(tab) => setCurrentTab(tab)}
+        onSelectTab={handleSelectTab}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
       />
@@ -180,11 +218,12 @@ export default function App() {
           currentTab={currentTab}
           selectedAsset={selectedAsset}
           availableAssets={headerAssets}
-          onAssetMenuOpen={() => { void refreshStatuses(); }}
+          isSampleAsset={currentTab === 'om' && selectedAsset === MIG_ASSET_ID}
+          onAssetMenuOpen={() => { if (currentTab === 'om') void refreshStatuses(); }}
           onSelectAsset={(newAssetId) => setSelectedAsset(newAssetId)}
           datePreset={
             currentTab === 'om'
-              ? omDatePreset
+              ? selectedAsset === 'CRANE#01' ? craneDatePreset : omDatePreset
               : currentTab === 'management'
               ? mgmtDatePreset
               : currentTab === 'finance'
@@ -193,7 +232,8 @@ export default function App() {
           }
           onSelectDatePreset={(newPreset) => {
             if (currentTab === 'om') {
-              setOmDatePreset(newPreset);
+              if (selectedAsset === 'CRANE#01') setCraneDatePreset(newPreset as 'today' | '7days' | '30days');
+              else setOmDatePreset(newPreset);
             } else if (currentTab === 'management') {
               setMgmtDatePreset(newPreset);
             } else if (currentTab === 'finance') {
@@ -208,7 +248,7 @@ export default function App() {
             setMgmtDatePreset('custom');
           }}
           isRefreshing={isRefreshing}
-          onRefresh={handleRefresh}
+          onRefresh={currentTab === 'om' && selectedAsset === MIG_ASSET_ID ? undefined : handleRefresh}
           onOpenIntuitiveAi={handleOpenIntuitiveAi}
           onLogout={handleLogout}
           notificationCount={0}
@@ -218,7 +258,18 @@ export default function App() {
 
         {/* View Routing Canvas - Resolution Agnostic Single-Screen View */}
         <main className="flex-1 min-h-0 flex flex-col overflow-hidden h-full">
-          {currentTab === 'om' && (
+          {currentTab === 'overview' && (
+            <AssetOverviewView
+              statuses={assetStatuses}
+              refreshKey={overviewRefreshKey}
+              onOpenAsset={handleOpenAsset}
+            />
+          )}
+          {currentTab === 'om' && selectedAsset === 'CRANE#01' && (
+            <CraneDashboardView datePreset={craneDatePreset} refreshKey={craneRefreshKey} />
+          )}
+          {currentTab === 'om' && selectedAsset === MIG_ASSET_ID && <MigOmDashboardView />}
+          {currentTab === 'om' && selectedAsset !== 'CRANE#01' && selectedAsset !== MIG_ASSET_ID && (
             <OmDashboardView
               ref={omRef}
               selectedAsset={selectedAsset}

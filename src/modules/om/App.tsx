@@ -324,6 +324,7 @@ export default function App() {
               <HealthGauges
                 latest={data.latest}
                 kpis={data.kpis}
+                assetId={data.compressor}
                 onOpenExpandGraphs={() => handleOpenExpandGraphs('all')}
               />
             </div>
@@ -333,6 +334,7 @@ export default function App() {
           <section className="w-full">
             <OperationalSummary
               kpis={data.kpis}
+              assetId={selectedAsset}
               selectedRange={rangePreset}
             />
           </section>

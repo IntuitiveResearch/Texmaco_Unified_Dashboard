@@ -1,0 +1,30 @@
+.telemetry-three-up .telemetry-compressor-card {
+  padding: 10px 12px;
+  gap: 7px;
+}
+
+.telemetry-three-up .telemetry-compressor-card h3 {
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.telemetry-three-up .telemetry-compressor-card > div:first-child > div:not(:first-child) {
+  margin-top: 7px;
+}
+
+.telemetry-three-up .telemetry-compressor-card > div:first-child > div:not(:first-child) span[class*="text-slate-500"],
+.telemetry-three-up .telemetry-compressor-card > div:first-child > div:not(:first-child) span[class*="text-slate-600"] {
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.telemetry-three-up .telemetry-compressor-card > div:first-child > div:not(:first-child) span[class*="text-slate-900"] {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .telemetry-three-up .telemetry-compressor-card { padding: 9px 10px; }
+  .telemetry-three-up .telemetry-compressor-card h3 { font-size: 14px; }
+  .telemetry-three-up .telemetry-compressor-card > div:first-child > div:not(:first-child) span[class*="text-slate-900"] { font-size: 13px; }
+}

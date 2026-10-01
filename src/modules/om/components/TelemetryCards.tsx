@@ -4,6 +4,7 @@ import { LatestTelemetry, TrendSample, KpiMetrics, OperationalGraphDataResponse 
 import { fetchOperationalGraphData, isGraphDataMatchingAsset } from '../services/kpiService';
 import { InteractiveGraph, SeriesConfig } from './InteractiveGraph';
 import { WeldingCurrentTimeSeriesItem } from '../services/weldingService';
+import './telemetryCards.css';
 
 interface TelemetryCardsProps {
   latest: LatestTelemetry;
@@ -54,6 +55,12 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
     compressorId === 'CMP01' ||
     compressorId?.toUpperCase()?.includes('CMP#01') ||
     compressorId?.toUpperCase()?.includes('CMP01');
+  const isCmp02 =
+    compressorId === 'CMP#02' ||
+    compressorId === 'CMP02' ||
+    compressorId?.toUpperCase()?.includes('CMP#02') ||
+    compressorId?.toUpperCase()?.includes('CMP02');
+  const isCompressor = isCmp01 || isCmp02;
 
   const isCnc01 =
     compressorId === 'CNC#01' ||
@@ -309,9 +316,9 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
         )}
       </div>
 
-      <div className={(isCnc01 || isRobo01) ? "grid grid-cols-1 w-full" : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5 sm:gap-2 2xl:gap-2.5"}>
+      <div className={(isCnc01 || isRobo01) ? "grid grid-cols-1 w-full" : isCompressor ? "telemetry-three-up grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-2.5 2xl:gap-3" : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5 sm:gap-2 2xl:gap-2.5"}>
         {/* 1. CURRENT (I) */}
-        <div className={`bg-[#ecfdf5] rounded-xl border border-emerald-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden ${(isCnc01 || isRobo01) ? 'col-span-full w-full' : ''}`}>
+        <div className={`bg-[#ecfdf5] rounded-xl border border-emerald-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden ${(isCnc01 || isRobo01) ? 'col-span-full w-full' : 'telemetry-compressor-card'}`}>
           <div>
             {/* Card Header with individual expand button */}
             <div className="flex items-center justify-between mb-0.5 2xl:mb-1">
@@ -395,7 +402,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
             series={currentSeries}
             unit={activeGraphData?.graphs?.current?.unit || 'A'}
             colorTheme="emerald"
-            heightClass="h-16 sm:h-18 2xl:h-20"
+            heightClass={isCnc01 || isRobo01 ? 'h-16 sm:h-18 2xl:h-20' : 'h-20 sm:h-22 2xl:h-24'}
             compact={true}
             showSyncButton={false}
           />
@@ -403,7 +410,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
 
         {/* 2. VIBRATION (g) - Hidden for CNC1 and Robo Welder */}
         {!isZeroTelemetry && (
-          <div className="bg-[#eff6ff] rounded-xl border border-blue-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
+          <div className="telemetry-compressor-card bg-[#eff6ff] rounded-xl border border-blue-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
               {/* Card Header with individual expand button */}
               <div className="flex items-center justify-between mb-0.5 2xl:mb-1">
@@ -497,7 +504,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
               series={vibSeries}
               unit={activeGraphData?.graphs?.vibration?.unit || 'g'}
               colorTheme="blue"
-              heightClass="h-10 sm:h-11 2xl:h-12"
+              heightClass="h-16 sm:h-18 2xl:h-20"
               compact={true}
               showSyncButton={false}
             />
@@ -506,7 +513,7 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
 
         {/* 3. TEMPERATURE - Hidden for CNC1 and Robo Welder */}
         {!isZeroTelemetry && (
-          <div className="bg-[#fff1f2] rounded-xl border border-rose-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
+          <div className="telemetry-compressor-card bg-[#fff1f2] rounded-xl border border-rose-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
               {/* Card Header with individual expand button */}
               <div className="flex items-center justify-between mb-0.5 2xl:mb-1">
@@ -583,15 +590,15 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
               series={tempSeries}
               unit={activeGraphData?.graphs?.temperature?.unit || (isCmp01 ? '°C' : '°C/min')}
               colorTheme="rose"
-              heightClass="h-10 sm:h-11 2xl:h-12"
+              heightClass="h-16 sm:h-18 2xl:h-20"
               compact={true}
               showSyncButton={false}
             />
           </div>
         )}
 
-        {/* 4. ELECTRICAL (MFM384 / EnergyIQ) - Hidden for CNC1 and Robo Welder */}
-        {!isZeroTelemetry && (
+        {/* 4. ELECTRICAL (MFM384 / EnergyIQ) - Hidden for both compressors */}
+        {!isZeroTelemetry && !isCompressor && (
           <div className="bg-[#fffbeb] rounded-xl border border-amber-200/90 p-1.5 2xl:p-2 shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
               {/* Card Header with individual expand button */}

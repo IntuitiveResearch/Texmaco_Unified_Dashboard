@@ -1,0 +1,86 @@
+.overview-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 13px 19px 25px;
+  background: #eaf2ff;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 22px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dbe4ee;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(11, 34, 67, .045);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+
+.overview-card[data-clickable="true"] { cursor: pointer; }
+.overview-card[data-clickable="true"]:hover,
+.overview-card[data-clickable="true"]:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 28px rgba(11, 34, 67, .13);
+  outline: 2px solid #1b73ed;
+  outline-offset: 1px;
+}
+
+.overview-card-photo { position: relative; flex: none; height: 146px; background: #14243b; overflow: hidden; }
+.overview-card-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(1, 13, 33, .22), transparent 55%, rgba(1, 13, 33, .14)); pointer-events: none; }
+.overview-card-photo-backdrop { position: absolute; inset: -16px; width: calc(100% + 32px); height: calc(100% + 32px); object-fit: cover; filter: blur(13px) brightness(.65); }
+.overview-card-photo-image { position: relative; width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 2px 10px rgba(1, 13, 33, .4)); }
+.overview-status { position: absolute; top: 10px; left: 10px; z-index: 1; display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: rgba(0, 166, 122, .92); color: white; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px #04192a44; }
+.overview-status > span { width: 9px; height: 9px; border-radius: 50%; background: #0de5af; }
+.overview-status-idle { background: rgba(178, 125, 0, .94); }
+.overview-status-idle > span { background: #ffc227; }
+.overview-status-stopped, .overview-status-offline { background: rgba(181, 32, 56, .95); }
+.overview-status-stopped > span, .overview-status-offline > span { background: #ff3d5b; }
+.overview-status-unknown { background: rgba(74, 86, 106, .95); }
+.overview-status-unknown > span { background: #c7d0da; }
+.overview-radio { position: absolute; right: 10px; top: 10px; z-index: 1; box-sizing: content-box; padding: 5px; border-radius: 50%; background: rgba(5, 22, 46, .8); color: white; }
+
+.overview-card-body { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 8px 9px 8px; }
+.overview-card-heading { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 4px; padding: 0 3px 5px; }
+.overview-card-heading h2 { margin: 0; color: #101e3a; font-size: 16px; font-weight: 800; text-transform: none; line-height: 1.15; }
+.overview-card-heading p { margin: 2px 0 0; color: #41536c; font-size: 11px; line-height: 1.25; }
+.overview-card-heading svg { flex: none; color: #526880; }
+.overview-gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.overview-gauge-tile { min-width: 0; height: 79px; padding: 7px 7px 5px; border-radius: 9px; background: linear-gradient(135deg, #f0f8fc, #edf6fa); }
+.overview-tile-label { display: flex; align-items: center; gap: 4px; white-space: nowrap; color: #263e56; font-size: 10px; }
+.overview-tile-icon { color: #1389d3; display: flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: #dbeff7; }
+.overview-gauge-tile:nth-child(3) .overview-tile-icon { color: #0dab84; background: #d9f6ec; }
+.overview-gauge-row { display: flex; justify-content: center; align-items: center; gap: 7px; margin-top: 6px; }
+.overview-gauge-row strong { font-size: 15px; font-weight: 800; color: #172443; white-space: nowrap; }
+.overview-ring { width: 32px; height: 32px; border-radius: 50%; position: relative; flex: none; }
+.overview-ring::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: #f3f9fc; }
+.overview-finance { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+.overview-finance-box { min-width: 0; display: flex; align-items: center; gap: 7px; min-height: 67px; border-radius: 9px; padding: 7px 8px; }
+.overview-finance-box.exposure { background: linear-gradient(110deg, #fff1f4, #fce7eb); }
+.overview-finance-box.savings { background: linear-gradient(110deg, #e9faf5, #e9f9f5); }
+.overview-finance-icon { flex: none; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #ffd6dd; color: #e32649; }
+.overview-finance-box.savings .overview-finance-icon { background: #ccf3e6; color: #10bd8a; }
+.overview-finance-box small { display: block; color: #34425a; font-size: 10px; line-height: 1.25; }
+.overview-finance-box strong { display: block; margin-top: 4px; color: #16213c; font-size: 13px; line-height: 1.1; white-space: nowrap; }
+.overview-trend-label { margin: 8px 2px 0; color: #405773; font-size: 10px; }
+.overview-trend { width: 100%; height: 31px; display: block; margin-top: 1px; }
+.overview-trend-empty { height: 31px; display: flex; align-items: center; color: #91a0ae; font-size: 10px; }
+.overview-card-footer { min-height: 21px; display: flex; align-items: center; justify-content: space-between; margin: auto 2px 0; }
+.overview-data-tag { color: #148269; font-size: 9px; font-weight: 650; }
+.overview-data-tag.mock { color: #866e38; }
+.overview-card-footer .overview-open { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: #1168cf; font-size: 10px; font-weight: 750; }
+
+@media (max-width: 1160px) { .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .overview-grid { grid-template-columns: 1fr; max-width: 560px; } }
+@media (max-width: 700px) { .overview-page { padding: 9px; } .overview-card-photo { height: 160px; } }
+@media (min-width: 1600px) { .overview-card-photo { height: 154px; } .overview-gauge-tile { height: 82px; } .overview-trend { height: 34px; } }

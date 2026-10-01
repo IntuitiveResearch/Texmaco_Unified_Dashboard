@@ -25,7 +25,7 @@ export function useAssetStatuses(enabled: boolean, rangePreset: DateRangePreset)
     if (!enabled) return;
     // Share O&M's cache and in-flight requests; Robo Welder remains a running frontend preview.
     await Promise.allSettled(TELEMETRY_ASSETS.map(async assetId => {
-      const data = await fetchOperationalKpi(assetId, undefined, undefined, rangePreset);
+      const data = await fetchOperationalKpi(assetId, undefined, undefined, rangePreset, true);
       reportRunState(data.latest.current.run_state, assetId, data.latest.current.load_state);
     }));
   }, [enabled, rangePreset, reportRunState]);

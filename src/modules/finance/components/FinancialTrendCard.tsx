@@ -53,14 +53,14 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
       </div>
 
       {/* Chart Canvas & Legend */}
-      <div className="mt-2 flex flex-col sm:flex-row items-center gap-3">
+      <div className="mt-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-2.5">
         {/* Main Chart Area */}
         <div className="w-full sm:flex-1 h-34 sm:h-36 relative flex flex-col justify-end">
           {/* Y Axis Guide Lines & Labels */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-5 pl-7">
             {yTicks.map((tick) => (
               <div key={tick} className="flex items-center w-full">
-                <span className="text-[10px] font-bold text-slate-500 w-5 text-right pr-1 shrink-0">
+                <span className="text-[10px] font-semibold text-slate-400 w-5 text-right pr-1 shrink-0">
                   {tick}
                 </span>
                 <div className="w-full h-[1px] bg-slate-100" />
@@ -69,12 +69,12 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
           </div>
 
           {/* Y Axis Title */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-bold text-slate-500 tracking-wider pointer-events-none origin-center">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-bold text-slate-400 tracking-wider pointer-events-none origin-center">
             Cost (L)
           </div>
 
-          {/* Thick Stacked Bars */}
-          <div className="relative z-10 flex items-end justify-around pl-8 pr-1 h-full pb-5">
+          {/* Stacked Bars with clean spacing and proportionate width */}
+          <div className="relative z-10 flex items-end justify-around pl-10 sm:pl-12 pr-2 sm:pr-3 h-full pb-5">
             {trendData.map((item, idx) => {
               // Values based on viewMode
               let displayTotal = item.total;
@@ -106,14 +106,14 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
                   onMouseLeave={() => setActiveBar(null)}
                 >
                   {/* Top Total Label */}
-                  <span className="text-xs sm:text-[13px] font-black text-slate-900 mb-0.5">
+                  <span className="text-[11px] sm:text-xs font-bold text-slate-800 mb-0.5 tracking-tight">
                     {displayTotal.toFixed(1)}L
                   </span>
 
-                  {/* Stacked Bar Container - Scales responsively */}
+                  {/* Stacked Bar Container */}
                   <div className="h-22 sm:h-24 flex flex-col justify-end">
                     <div
-                      className="w-14 sm:w-18 md:w-20 rounded-t-sm flex flex-col-reverse overflow-hidden transition-all duration-200 shadow-sm"
+                      className="w-7 sm:w-8 md:w-9 rounded-t-sm flex flex-col-reverse overflow-hidden transition-all duration-200 shadow-xs"
                       style={{
                         height: `${Math.min(100, (displayTotal / maxVal) * 100)}%`,
                         transform: isHovered ? 'scaleY(1.02)' : 'none',
@@ -137,7 +137,7 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
                   </div>
 
                   {/* X Axis Month Label */}
-                  <span className="text-xs sm:text-[12.5px] font-bold text-slate-700 mt-1">
+                  <span className="text-[11px] sm:text-xs font-semibold text-slate-600 mt-1 whitespace-nowrap">
                     {item.month}
                   </span>
 
@@ -165,14 +165,14 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
         </div>
 
         {/* Legend on Right Side */}
-        <div className="shrink-0 flex flex-row sm:flex-col gap-2 sm:gap-1.5 text-xs border-t sm:border-t-0 sm:border-l border-slate-100 pt-1.5 sm:pt-0 sm:pl-3 justify-center">
+        <div className="shrink-0 flex flex-row sm:flex-col gap-1.5 text-xs border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0 sm:pl-2.5 justify-center sm:w-[124px]">
           {legendItems.map((item) => (
-            <div key={item.label} className="flex items-center gap-1.5">
+            <div key={item.label} className="flex items-center gap-1.5 min-w-0">
               <span
-                className="w-2.5 h-2.5 rounded-sm shrink-0"
+                className="w-2.5 h-2.5 rounded-xs shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-slate-700 text-xs sm:text-[12px] font-semibold whitespace-nowrap">
+              <span className="text-slate-600 text-[11px] font-medium leading-tight whitespace-nowrap">
                 {item.label}
               </span>
             </div>

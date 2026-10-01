@@ -20,6 +20,7 @@ import { WeldingOperationalSummary } from '../services/weldingService';
 
 interface OperationalSummaryProps {
   kpis: KpiMetrics;
+  assetId?: string;
   selectedRange?: DateRangePreset;
   onSelectRange?: (preset: DateRangePreset) => void;
   isRobo?: boolean;
@@ -29,6 +30,7 @@ interface OperationalSummaryProps {
 
 export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
   kpis,
+  assetId,
   selectedRange = '30days',
   isRobo = false,
   weldingSummary,
@@ -146,6 +148,10 @@ export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
       color: '#2563eb',
     },
   ];
+  const isCnc = assetId?.toUpperCase().includes('CNC') ?? false;
+  const visibleStandardItems = isCnc
+    ? standardItems.filter(item => !['Loaded Hours', 'Unloaded Hours', 'MTBR', 'MTBF'].includes(item.label))
+    : standardItems;
 
   if (isRobo) {
     const ws = weldingSummary || {
@@ -230,42 +236,41 @@ export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
     ];
 
     return (
-      <div className="bg-white rounded-xl border border-slate-200/90 p-1.5 sm:px-3 sm:py-2 shadow-2xs">
+      <div className="bg-white rounded-xl border border-slate-200/90 p-3 sm:px-4 sm:py-3 shadow-2xs">
         {/* Header title */}
-        <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-100">
-          <h3 className="text-xs sm:text-[12.5px] font-bold text-slate-800 tracking-tight">
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+          <h3 className="text-sm sm:text-[15px] font-bold text-slate-800 tracking-tight">
             Operational Summary{' '}
-            <span className="text-slate-400 font-normal">
+            <span className="text-slate-500 text-xs font-medium">
               ({periodLabel})
             </span>
           </h3>
         </div>
 
-        {/* 9 KPI Columns with consistent design: bigger font without bold, bigger label font */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 xl:grid-cols-9 items-center">
+        <div className="grid grid-cols-3 sm:grid-cols-5 2xl:grid-cols-9 items-center gap-y-3">
           {roboItems.map((item, idx) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.label}
-                className={`flex flex-col justify-center gap-0.5 min-w-0 px-2 ${
+                className={`flex flex-col justify-center gap-1.5 min-w-0 min-h-[62px] px-2.5 ${
                   idx === 0 ? 'pl-0' : 'border-l border-slate-100'
                 }`}
               >
                 <span
-                  className="text-[10px] 2xl:text-[11.5px] text-slate-600 font-semibold leading-tight truncate tracking-tight"
+                  className="text-[12px] 2xl:text-[13px] text-slate-800 font-bold leading-tight line-clamp-2 tracking-tight"
                   title={item.label}
                 >
                   {item.label}
                 </span>
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <Icon size={16} color={item.color} className="shrink-0" />
+                  <Icon size={17} color={item.color} className="shrink-0" />
                   <div className="flex items-baseline gap-0.5 whitespace-nowrap">
-                    <span className="text-[16px] 2xl:text-[19px] font-normal text-slate-900 leading-none tracking-tight">
+                    <span className="text-[19px] 2xl:text-[22px] font-semibold text-slate-900 leading-none tracking-tight tabular-nums">
                       {item.val}
                     </span>
                     {item.unit && (
-                      <span className="text-[10px] 2xl:text-[10.5px] font-normal text-slate-500">
+                      <span className="text-[11px] 2xl:text-[12px] font-medium text-slate-500">
                         {item.unit}
                       </span>
                     )}
@@ -280,42 +285,41 @@ export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 p-1.5 sm:px-3 sm:py-2 shadow-2xs">
+    <div className="bg-white rounded-xl border border-slate-200/90 p-3 sm:px-4 sm:py-3 shadow-2xs">
       {/* Header title */}
-      <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-100">
-        <h3 className="text-xs sm:text-[12.5px] font-bold text-slate-800 tracking-tight">
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+        <h3 className="text-sm sm:text-[15px] font-bold text-slate-800 tracking-tight">
           Operational Summary{' '}
-          <span className="text-slate-400 font-normal">
+          <span className="text-slate-500 text-xs font-medium">
             ({rangeLabels[selectedRange] || 'Last 30 Days'})
           </span>
         </h3>
       </div>
 
-      {/* 11 KPI Columns with the exact same design: bigger font without bold, bigger label font, vertical dividers */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-11 items-center">
-        {standardItems.map((item, idx) => {
+      <div className={`grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 ${isCnc ? 'xl:grid-cols-7' : '2xl:grid-cols-11'} items-center gap-y-3`}>
+        {visibleStandardItems.map((item, idx) => {
           const Icon = item.icon;
           return (
             <div
               key={item.label}
-              className={`flex flex-col justify-center gap-0.5 min-w-0 px-1.5 2xl:px-2 ${
+              className={`flex flex-col justify-center gap-1.5 min-w-0 min-h-[62px] px-2 2xl:px-2.5 ${
                 idx === 0 ? 'pl-0' : 'border-l border-slate-100'
               }`}
             >
               <span
-                className="text-[10px] 2xl:text-[11px] text-slate-600 font-semibold leading-tight truncate tracking-tight"
+                className="text-[12px] 2xl:text-[13px] text-slate-800 font-bold leading-tight line-clamp-2 tracking-tight"
                 title={item.label}
               >
                 {item.label}
               </span>
               <div className="flex items-center gap-1.5 min-w-0">
-                <Icon size={15} color={item.color} className="shrink-0" />
+                <Icon size={16} color={item.color} className="shrink-0" />
                 <div className="flex items-baseline gap-0.5 whitespace-nowrap">
-                  <span className="text-[15px] 2xl:text-[18px] font-normal text-slate-900 leading-none tracking-tight">
+                  <span className="text-[19px] 2xl:text-[21px] font-semibold text-slate-900 leading-none tracking-tight tabular-nums">
                     {item.val}
                   </span>
                   {item.unit && (
-                    <span className="text-[10px] 2xl:text-[10.5px] font-normal text-slate-500">
+                    <span className="text-[11px] 2xl:text-[12px] font-medium text-slate-500">
                       {item.unit}
                     </span>
                   )}

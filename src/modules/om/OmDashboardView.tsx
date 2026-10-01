@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { MachineHeaderCard } from './components/MachineHeaderCard';
 import { HealthGauges } from './components/HealthGauges';
+import { ROBO_HEALTH_SCORES } from './utils/overallHealth';
 import { OperationalSummary } from './components/OperationalSummary';
 import { TelemetryCards } from './components/TelemetryCards';
 import { BottomRow } from './components/BottomRow';
@@ -162,7 +163,7 @@ function buildRoboOperationalKpi(
         load_pct: os.utilization_percentage ?? 8.42,
         run_state: 1, // Running
         load_state: 1,
-        health_score: 88, // Electrical Health: 88
+        health_score: ROBO_HEALTH_SCORES.electrical,
         anomaly_score: 0,
         diag_flags: 0,
       },
@@ -181,7 +182,7 @@ function buildRoboOperationalKpi(
         axis_z_crest: 0,
         max_kurtosis: 0,
         state_tag: 0,
-        health_score: 82, // Mechanical Health: 82
+        health_score: ROBO_HEALTH_SCORES.mechanical,
       },
       temperature: {
         type: 'TEMPERATURE',
@@ -194,7 +195,7 @@ function buildRoboOperationalKpi(
         cooling_phase: 0,
         stress_hours: 0,
         rolling_variance: 0,
-        health_score: 79, // Thermal Health: 79
+        health_score: ROBO_HEALTH_SCORES.thermal,
         diag_flags: 0,
       },
       mfm: {
@@ -214,13 +215,13 @@ function buildRoboOperationalKpi(
         energy_kwh: os.total_energy_kwh ?? 21.13,
         v_imbalance_pct: 0,
         i_imbalance_pct: 0,
-        health_score: 85, // Power Health: 85
+        health_score: ROBO_HEALTH_SCORES.power,
       },
       kpi: {
         type: 'KPI',
         timestamp: latestTimestamp,
         cycle_id: welding.latest_cycle_number ?? 148,
-        availability_pct: 86.3, // overallScore = round((88*0.25 + 82*0.25 + 79*0.2 + 85*0.15 + 86.3*0.15) * 10) / 10 = 84.0
+        availability_pct: ROBO_HEALTH_SCORES.operational,
         utilization_pct: os.utilization_percentage ?? 8.42,
         runtime_hours: (os.active_welding_time?.hours ?? 1.64) + (os.positioning_time?.hours ?? 9.0),
         stopped_hours: os.off_time?.hours ?? 0.21,
@@ -454,6 +455,7 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
                 <HealthGauges
                   latest={data.latest}
                   kpis={data.kpis}
+                  assetId={selectedAsset}
                   onOpenExpandGraphs={() => handleOpenExpandGraphs('all')}
                 />
               </div>
@@ -463,6 +465,7 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
             <section className="w-full shrink-0">
               <OperationalSummary
                 kpis={data.kpis}
+                assetId={selectedAsset}
                 selectedRange={rangePreset}
                 isRobo={isRobo}
                 weldingSummary={isRobo ? weldingData?.operational_summary : undefined}

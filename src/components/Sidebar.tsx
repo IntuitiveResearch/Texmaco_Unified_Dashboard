@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard,
+  House,
   TrendingUp,
   Activity,
   Zap,
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react';
 import intuitiveRoboticsLogo from '../assets/intuitive-robotics-logo.png';
 
-export type DashboardTab = 'om' | 'management' | 'finance' | 'reports';
+export type DashboardTab = 'overview' | 'om' | 'management' | 'finance' | 'reports';
 
 interface SidebarProps {
   currentTab: DashboardTab;
@@ -26,6 +27,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const navItems = [
+    {
+      id: 'overview' as DashboardTab,
+      label: 'Asset Overview',
+      shortLabel: 'Overview',
+      icon: House,
+      badge: null,
+    },
     {
       id: 'om' as DashboardTab,
       label: 'O&M Dashboard',

@@ -5,6 +5,8 @@ import cmp02Jpeg from '../images/CMP02.jpeg';
 import cnc01Jpeg from '../../../assets/CNC01.jpeg';
 
 import roboWelderJpeg from '../../../assets/weldwise-robotic-cell.jpg';
+import migWelderPng from '../../../assets/mig-welder.png';
+import { MIG_ASSET_ID, MIG_ASSET_TAG } from '../data/migSample';
 
 // Dynamically discover any images added into /src/images or /src/assets
 const imageModules = import.meta.glob<{ default: string }>('/src/images/*.{png,jpg,jpeg,svg,webp}', {
@@ -27,6 +29,9 @@ export function getAssetDisplayName(assetId: string): string {
   if (normalized === 'CNC#01' || normalized === 'CNC01' || normalized.includes('TXMCNCI')) {
     return 'CNC 1';
   }
+  if (normalized === MIG_ASSET_ID || normalized === MIG_ASSET_TAG) {
+    return 'MIG Welding Machine';
+  }
   if (normalized === 'ROBO#01' || normalized === 'ROBO01' || normalized.includes('ROBO') || normalized.includes('TXMMIGI')) {
     return 'Robo Welder';
   }
@@ -43,6 +48,10 @@ export function getCompressorImage(compressorId: string, customUploadedUrl?: str
   }
 
   const normalizedId = compressorId.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  if (normalizedId === 'mig01' || normalizedId.includes('txmmigi26002')) {
+    return migWelderPng;
+  }
 
   if (normalizedId.includes('cnc01') || normalizedId.includes('cnc1') || normalizedId.includes('txmcnci')) {
     return cnc01Jpeg;

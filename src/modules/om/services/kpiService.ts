@@ -1,6 +1,7 @@
 import { OperationalKpiResponse, CurrentTelemetry, TemperatureTelemetry, MotionIqTelemetry, MfmTelemetry, KpiTelemetry, OperationalGraphDataResponse, DateRangePreset } from '../types';
 import { getMockKpiData } from '../data/mockData';
 import { getRangeDates } from '../utils/dateUtils';
+import { ROBO_HEALTH_SCORES } from '../utils/overallHealth';
 
 /**
  * Hardcoded API Gateway Endpoints
@@ -177,11 +178,11 @@ function normalizeApiResponse(
   };
 
   if (isRobo) {
-    normalizedLatest.current.health_score = 88;
-    normalizedLatest.motioniq.health_score = 82;
-    normalizedLatest.temperature.health_score = 79;
-    normalizedLatest.mfm.health_score = 85;
-    normalizedLatest.kpi.availability_pct = normalizedKpis.availability || 98.92;
+    normalizedLatest.current.health_score = ROBO_HEALTH_SCORES.electrical;
+    normalizedLatest.motioniq.health_score = ROBO_HEALTH_SCORES.mechanical;
+    normalizedLatest.temperature.health_score = ROBO_HEALTH_SCORES.thermal;
+    normalizedLatest.mfm.health_score = ROBO_HEALTH_SCORES.power;
+    normalizedLatest.kpi.availability_pct = ROBO_HEALTH_SCORES.operational;
 
     normalizedLatest.current.rms_a = rmsA;
     normalizedLatest.current.load_pct = calculatedCurrentLoadPct;
@@ -566,6 +567,13 @@ export async function fetchOperationalKpi(
     }
 
     const mock = getMockKpiData(compressor, effectiveStart, effectiveEnd);
+    if (apiCompressor === ROBO_PK) {
+      mock.latest.current.health_score = ROBO_HEALTH_SCORES.electrical;
+      mock.latest.motioniq.health_score = ROBO_HEALTH_SCORES.mechanical;
+      mock.latest.temperature.health_score = ROBO_HEALTH_SCORES.thermal;
+      mock.latest.mfm.health_score = ROBO_HEALTH_SCORES.power;
+      mock.latest.kpi.availability_pct = ROBO_HEALTH_SCORES.operational;
+    }
     const entry = { data: mock, timestamp: Date.now() };
     kpiMemoryCache.set(cacheKey, entry);
     return mock;

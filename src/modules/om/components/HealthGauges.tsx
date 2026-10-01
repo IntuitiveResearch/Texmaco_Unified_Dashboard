@@ -1,10 +1,13 @@
 import React from 'react';
 import { Activity, Zap, Eye, AlertOctagon, Gauge, type LucideIcon } from 'lucide-react';
 import { LatestTelemetry, KpiMetrics } from '../types';
+import { getDisplayedOverallHealth } from '../utils/overallHealth';
 
 interface HealthGaugesProps {
   latest: LatestTelemetry;
   kpis?: KpiMetrics;
+  assetId?: string;
+  overallDescription?: string;
   onOpenExpandGraphs?: () => void;
   includePower?: boolean;
   className?: string;
@@ -82,6 +85,8 @@ const ThickHorseshoeGauge: React.FC<{
 export const HealthGauges: React.FC<HealthGaugesProps> = ({
   latest,
   kpis,
+  assetId,
+  overallDescription,
   includePower = true,
   className = '',
   renderGauge,
@@ -92,23 +97,16 @@ export const HealthGauges: React.FC<HealthGaugesProps> = ({
   const mfmScore = latest.mfm?.health_score ?? 70;
   const opScore = latest.kpi?.availability_pct ?? kpis?.availability ?? 82;
 
-  // Calculate Overall Health as weighted average across active dimensions
-  const overallScore = Math.round(
-    (currentScore * 0.25 +
-      vibScore * 0.25 +
-      tempScore * 0.2 +
-      (mfmScore > 0 ? mfmScore * 0.15 : 0) +
-      (opScore > 0 ? opScore * 0.15 : 0)) * 10
-  ) / 10;
+  const overallScore = getDisplayedOverallHealth(latest, kpis, assetId);
 
   const gauges: HealthGaugeItem[] = [
     {
       title: 'Overall Health',
-      score: overallScore || 82,
+      score: overallScore,
       status: overallScore < 40 ? 'Critical' : overallScore < 70 ? 'Watch' : 'Good',
-      color: '#10b981', // emerald
-      trackColor: '#d1fae5', // emerald-100
-      description: 'Running within normal limits',
+      color: overallScore < 40 ? '#ef4444' : overallScore < 70 ? '#f59e0b' : '#10b981',
+      trackColor: overallScore < 40 ? '#fee2e2' : overallScore < 70 ? '#fef3c7' : '#d1fae5',
+      description: overallDescription ?? (overallScore < 70 ? 'Health needs attention' : 'Running within normal limits'),
       icon: Activity,
     },
     {
@@ -126,7 +124,7 @@ export const HealthGauges: React.FC<HealthGaugesProps> = ({
       status: vibScore < 40 ? 'Critical' : vibScore < 70 ? 'Watch' : 'Good',
       color: '#f59e0b', // amber
       trackColor: '#fef3c7', // amber-100
-      description: 'Elevated vibration levels',
+      description: vibScore >= 80 ? 'Vibration within normal range' : 'Elevated vibration levels',
       icon: Eye,
     },
     {
@@ -135,7 +133,7 @@ export const HealthGauges: React.FC<HealthGaugesProps> = ({
       status: tempScore < 40 ? 'Critical' : tempScore < 70 ? 'Watch' : 'Good',
       color: '#ef4444', // red
       trackColor: '#fee2e2', // red-100
-      description: 'High temperature detected',
+      description: tempScore >= 80 ? 'Temperature within normal range' : 'High temperature detected',
       icon: AlertOctagon,
     },
     {
