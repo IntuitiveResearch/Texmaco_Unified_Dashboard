@@ -133,7 +133,7 @@ export interface AssetMeta {
   plant: string;
   deviceId: string;
   type: string;
-  status: 'Running' | 'Stopped' | 'Standby';
+  status: 'Online' | 'Offline' | 'Running' | 'Stopped' | 'Standby';
 }
 
 export interface AuthUser {

@@ -135,7 +135,11 @@ function buildRoboOperationalKpi(
       : null;
 
   const latestTimestamp = latestTimeSeries?.timestamp || new Date().toISOString();
-  const latestCurrent = latestTimeSeries?.peak_current_a ?? 21.87;
+  const latestCurrent = typeof latestTimeSeries?.peak_current_a === 'number'
+    ? latestTimeSeries.peak_current_a
+    : typeof (latestTimeSeries as any)?.rms_a === 'number'
+    ? (latestTimeSeries as any).rms_a
+    : 0;
 
   return {
     compressor: 'MACHINE#PI4G/TXMMIGI/26001',
@@ -163,8 +167,8 @@ function buildRoboOperationalKpi(
         cycle_id: welding.latest_cycle_number ?? 148,
         rms_a: latestCurrent,
         load_pct: os.utilization_percentage ?? 8.42,
-        run_state: 1, // Running
-        load_state: 1,
+        run_state: latestCurrent > 0 ? 1 : 0,
+        load_state: latestCurrent > 0 ? 1 : 0,
         health_score: ROBO_HEALTH_SCORES.electrical,
         anomaly_score: 0,
         diag_flags: 0,
@@ -270,7 +274,7 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
             setData(synthesizedKpi);
             setGraphData(null);
             if (onRunStateChange) {
-              onRunStateChange(1, asset, 1);
+              onRunStateChange(synthesizedKpi.latest.current.run_state, asset, synthesizedKpi.latest.current.load_state);
             }
             setTrendSamples((prev) => {
               if (prev.length === 0) return loadOrInitTrend(asset, synthesizedKpi.latest);
@@ -315,7 +319,7 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
           const synthesizedKpi = buildRoboOperationalKpi(weldingResponse, dates);
           setData(synthesizedKpi);
           if (onRunStateChange) {
-            onRunStateChange(1, asset, 1);
+            onRunStateChange(synthesizedKpi.latest.current.run_state, asset, synthesizedKpi.latest.current.load_state);
           }
           setTrendSamples((prev) => {
             if (prev.length === 0) return loadOrInitTrend(asset, synthesizedKpi.latest);

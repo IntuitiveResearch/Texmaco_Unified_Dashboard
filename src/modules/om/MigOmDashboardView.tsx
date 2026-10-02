@@ -37,7 +37,7 @@ export function MigOmDashboardView() {
             <div className="lg:col-span-4">
               <MachineHeaderCard
                 compressorId={MIG_ASSET_ID}
-                assetMeta={{ id: MIG_ASSET_ID, name: 'MIG Welding Machine', plant: 'Texmaco - Agarpara', deviceId: MIG_ASSET_ID, type: 'MIG Welder', status: 'Stopped' }}
+                assetMeta={{ id: MIG_ASSET_ID, name: 'MIG Welding Machine', plant: 'Texmaco - Agarpara', deviceId: MIG_ASSET_ID, type: 'MIG Welder', status: 'Offline' }}
                 runState={0}
                 loadState={0}
                 hideCycleId

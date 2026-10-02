@@ -60,7 +60,7 @@ const CARDS: AssetCard[] = [
   },
   {
     id: MIG_ASSET_ID, title: 'MIG Welding Machine', model: 'Fronius MIG 400', image: migImage,
-    mock: true, mockStatus: 'Stopped',
+    mock: true, mockStatus: 'Offline',
     values: { availability: MIG_OPERATIONAL_SUMMARY.availability, utilization: MIG_OPERATIONAL_SUMMARY.utilization, health: MIG_HEALTH_SCORES.overall, exposure: 452000, savings: 278000, trend: [] },
   },
 ];
@@ -157,7 +157,7 @@ function AssetOverviewCard({ card, values, status, loading, onOpenAsset }: {
       <div className="overview-card-photo">
         <img className="overview-card-photo-backdrop" src={card.image} alt="" aria-hidden="true" />
         <img className="overview-card-photo-image" src={card.image} alt={card.title} />
-        <span className={`overview-status overview-status-${appearance.label.toLowerCase()}`}><span />{card.id === 'MIG#01' ? 'OFF' : appearance.label.toUpperCase()}</span>
+        <span className={`overview-status overview-status-${appearance.label.toLowerCase()}`}><span />{appearance.label.toUpperCase()}</span>
         <Radio className="overview-radio" size={18} aria-label={card.mock ? 'Machine status' : 'Connected machine'} />
       </div>
       <div className="overview-card-body">
@@ -250,7 +250,7 @@ export function AssetOverviewView({ statuses, refreshKey, onOpenAsset }: {
             key={card.id}
             card={card}
             values={card.values ?? values[card.id as ConnectedId] ?? defaultValuesFor(card.id as ConnectedId)}
-            status={card.mock ? card.mockStatus! : statuses[card.id] ?? 'Unknown'}
+            status={card.mock ? card.mockStatus! : statuses[card.id] ?? 'Online'}
             loading={!card.mock && !settled[card.id as ConnectedId]}
             onOpenAsset={onOpenAsset}
           />

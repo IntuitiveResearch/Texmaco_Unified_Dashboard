@@ -100,9 +100,9 @@ const TelemetryCardsComponent: React.FC<TelemetryCardsProps> = ({
 
   const roboLatestCurrent = useMemo(() => {
     if (weldingTimeSeries && weldingTimeSeries.length > 0) {
-      return weldingTimeSeries[weldingTimeSeries.length - 1]?.peak_current_a ?? 21.87;
+      return weldingTimeSeries[weldingTimeSeries.length - 1]?.peak_current_a ?? 0;
     }
-    return 21.87;
+    return 0;
   }, [weldingTimeSeries]);
 
   // For CNC#01, get latest values from API graph data if available, or from KPI latest.current

@@ -77,7 +77,7 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
             <span
               className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider shadow-2xs ${status.pillClass}`}
             >
-              {isMig && status.label === 'Stopped' ? 'OFF' : status.label.toUpperCase()}
+              {status.label.toUpperCase()}
             </span>
             {isRobo && (
               <span className="text-[8px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">

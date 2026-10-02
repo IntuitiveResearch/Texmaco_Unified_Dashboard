@@ -29,7 +29,7 @@ test('both compressor API formats produce matching card/dropdown states from RMS
           const source = structuredClone(payload);
           const result = await fetchOperationalKpi(asset, '2026-09-29', '2026-09-29', 'today', true);
           const current = result.latest.current;
-          const expectedStatus = rms === 0 ? 'Stopped' : 'Running';
+          const expectedStatus = rms === 0 ? 'Offline' : 'Online';
           assert.equal(current.rms_a, rms);
           assert.equal(current.run_state, rms === 0 ? 0 : 1);
           assert.equal(getOperatingStatus(current.run_state, current.load_state, asset), expectedStatus);

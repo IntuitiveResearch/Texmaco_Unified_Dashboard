@@ -156,7 +156,15 @@ function normalizeApiResponse(
     rawCurrent = { ...defaultCurrent, rms_a: rmsA };
   } else if (typeof parsed?.latest?.current === 'object' && parsed?.latest?.current !== null) {
     rawCurrent = parsed.latest.current;
-    rmsA = typeof rawCurrent.rms_a === 'number' ? rawCurrent.rms_a : 0;
+    if (typeof rawCurrent.rms_a === 'number') {
+      rmsA = rawCurrent.rms_a;
+    } else if (typeof (rawCurrent as any).current === 'number') {
+      rmsA = (rawCurrent as any).current;
+    } else if (typeof (rawCurrent as any).peak_current_a === 'number') {
+      rmsA = (rawCurrent as any).peak_current_a;
+    } else {
+      rmsA = 0;
+    }
   }
 
   // The load percent in the Current KPI should be (rms_current/280) * 100

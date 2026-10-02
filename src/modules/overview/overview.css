@@ -40,8 +40,8 @@
 .overview-card-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(1, 13, 33, .22), transparent 55%, rgba(1, 13, 33, .14)); pointer-events: none; }
 .overview-card-photo-backdrop { position: absolute; inset: -16px; width: calc(100% + 32px); height: calc(100% + 32px); object-fit: cover; filter: blur(13px) brightness(.65); }
 .overview-card-photo-image { position: relative; width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 2px 10px rgba(1, 13, 33, .4)); }
-.overview-status { position: absolute; top: 10px; left: 10px; z-index: 1; display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: rgba(0, 166, 122, .92); color: white; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px #04192a44; }
-.overview-status > span { width: 9px; height: 9px; border-radius: 50%; background: #0de5af; }
+.overview-status, .overview-status-online { position: absolute; top: 10px; left: 10px; z-index: 1; display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: rgba(0, 166, 122, .92); color: white; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px #04192a44; }
+.overview-status > span, .overview-status-online > span { width: 9px; height: 9px; border-radius: 50%; background: #0de5af; }
 .overview-status-idle { background: rgba(178, 125, 0, .94); }
 .overview-status-idle > span { background: #ffc227; }
 .overview-status-stopped, .overview-status-offline { background: rgba(181, 32, 56, .95); }

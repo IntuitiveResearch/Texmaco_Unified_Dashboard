@@ -53,25 +53,25 @@ const AVAILABLE_HEADER_ASSETS: HeaderAsset[] = [
     id: 'CMP#01',
     name: 'Compressor 1',
     plant: 'Agarpara Plant',
-    status: 'Running',
+    status: 'Online',
   },
   {
     id: 'CMP#02',
     name: 'Compressor 2',
     plant: 'Agarpara Plant',
-    status: 'Running',
+    status: 'Online',
   },
   {
     id: 'CNC#01',
     name: 'CNC 1',
     plant: 'Agarpara Plant',
-    status: 'Running',
+    status: 'Online',
   },
   {
     id: 'ROBO#01',
     name: 'Robo Welder',
     plant: 'Texmaco - Agarpara',
-    status: 'Running',
+    status: 'Online',
   },
   {
     id: 'CRANE#01',
@@ -83,7 +83,7 @@ const AVAILABLE_HEADER_ASSETS: HeaderAsset[] = [
     id: MIG_ASSET_ID,
     name: 'MIG Welding Machine',
     plant: 'Texmaco - Agarpara',
-    status: 'Stopped',
+    status: 'Offline',
   },
 ];
 
@@ -119,7 +119,7 @@ export default function App() {
   const { statuses: assetStatuses, reportRunState, refreshStatuses } = useAssetStatuses(isAuthenticated, statusRangePreset);
   const headerAssets = AVAILABLE_HEADER_ASSETS
     .filter(asset => currentTab === 'om' || (asset.id !== 'CRANE#01' && asset.id !== MIG_ASSET_ID))
-    .map(asset => ({ ...asset, status: asset.id === 'CRANE#01' ? CRANE_ASSET_STATUS : asset.id === MIG_ASSET_ID ? 'Stopped' : assetStatuses[asset.id] ?? 'Unknown' }));
+    .map(asset => ({ ...asset, status: asset.id === 'CRANE#01' ? CRANE_ASSET_STATUS : asset.id === MIG_ASSET_ID ? 'Offline' : assetStatuses[asset.id] ?? 'Online' }));
 
   // Custom date range for Executive Dashboard
   const [customStartDate, setCustomStartDate] = useState<string>(

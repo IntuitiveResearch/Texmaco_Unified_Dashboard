@@ -1,29 +1,41 @@
-export type AssetStatus = 'Running' | 'Idle' | 'Stopped' | 'Offline' | 'Unknown';
+export type AssetStatus = 'Online' | 'Offline' | 'Running' | 'Idle' | 'Stopped' | 'Unknown';
 
-export function getOperatingStatus(runState?: number, loadState?: number, assetId?: string): AssetStatus {
-  if (typeof runState !== 'number' || !Number.isFinite(runState)) return 'Unknown';
-  if (runState !== 1) return 'Stopped';
-  // Compressor load/unload describes utilization, not whether the machine is running.
-  const normalizedId = assetId?.trim().toUpperCase().replace('#', '');
-  if (normalizedId === 'CMP01' || normalizedId === 'CMP02') return 'Running';
-  return loadState === 0 ? 'Idle' : 'Running';
+/**
+ * Returns 'Online' if latest current > 0 (or runState > 0), otherwise 'Offline'.
+ * If latest current is explicitly provided (or runState is derived from current),
+ * 0 => Offline, > 0 => Online.
+ */
+export function getOperatingStatus(
+  runState?: number,
+  loadState?: number,
+  assetId?: string,
+  latestCurrent?: number
+): AssetStatus {
+  if (typeof latestCurrent === 'number' && Number.isFinite(latestCurrent)) {
+    return latestCurrent > 0 ? 'Online' : 'Offline';
+  }
+  if (typeof runState !== 'number' || !Number.isFinite(runState)) {
+    return 'Offline';
+  }
+  return runState > 0 ? 'Online' : 'Offline';
 }
 
 export function getAssetStatusAppearance(status?: string) {
   switch (status?.trim().toLowerCase()) {
+    case 'online':
     case 'running':
-      return { label: 'Running', dotClass: 'bg-emerald-500', pillClass: 'bg-emerald-500 text-white' };
-    case 'idle':
-    case 'standby':
-      return { label: 'Idle', dotClass: 'bg-amber-500', pillClass: 'bg-amber-500 text-white' };
+      return { label: 'Online', dotClass: 'bg-emerald-500', pillClass: 'bg-emerald-500 text-white' };
     case 'offline':
-      return { label: 'Offline', dotClass: 'bg-rose-500', pillClass: 'bg-rose-500 text-white' };
     case 'stopped':
     case 'not running':
     case 'off':
     case 'downtime':
-      return { label: 'Stopped', dotClass: 'bg-rose-500', pillClass: 'bg-rose-500 text-white' };
+      return { label: 'Offline', dotClass: 'bg-rose-500', pillClass: 'bg-rose-500 text-white' };
+    case 'idle':
+    case 'standby':
+      return { label: 'Idle', dotClass: 'bg-amber-500', pillClass: 'bg-amber-500 text-white' };
     default:
-      return { label: 'Unknown', dotClass: 'bg-slate-400', pillClass: 'bg-slate-400 text-white' };
+      return { label: 'Offline', dotClass: 'bg-rose-500', pillClass: 'bg-rose-500 text-white' };
   }
 }
+
