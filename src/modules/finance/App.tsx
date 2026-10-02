@@ -6,7 +6,6 @@ import { FinancialTrendCard } from './components/FinancialTrendCard';
 import { KeyTakeawayCard } from './components/KeyTakeawayCard';
 import { SavingOpportunitiesCard } from './components/SavingOpportunitiesCard';
 import { InputAssumptionsCard } from './components/InputAssumptionsCard';
-import { NextStepsCard } from './components/NextStepsCard';
 import { LoginScreen } from './components/LoginScreen';
 import { ASSET_OPTIONS, INITIAL_ASSUMPTIONS, PLANTS_DATA } from './mockData';
 import { AssetOption, FinancialAssumption, PlantData } from './types';
@@ -173,7 +172,7 @@ export default function App() {
 
         {/* ROW 1: 5 KPI Metric Cards */}
         <section aria-label="Key Performance Indicators" className={`transition-opacity duration-200 ${isLoadingIntel ? 'opacity-70' : 'opacity-100'}`}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 3xl:gap-4 4xl:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 3xl:gap-4 4xl:gap-5 items-stretch">
             {activePlantData.kpis.map((kpi) => (
               <KpiCard key={kpi.id} kpi={kpi} />
             ))}
@@ -182,9 +181,9 @@ export default function App() {
 
         {/* ROW 2: Charts & Executive Takeaway */}
         <section aria-label="Financial Visualizations & Insights" className={`transition-opacity duration-200 ${isLoadingIntel ? 'opacity-70' : 'opacity-100'}`}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 3xl:gap-4 4xl:gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 3xl:gap-4 4xl:gap-5 items-stretch">
             {/* Cost Distribution (Donut Chart) */}
-            <div className="lg:col-span-5 flex flex-col">
+            <div className="lg:col-span-5 flex flex-col h-full">
               <CostDistributionCard
                 categories={activePlantData.costCategories}
                 totalExposure={activePlantData.totalExposure}
@@ -193,12 +192,12 @@ export default function App() {
             </div>
 
             {/* Financial Exposure Trend (Stacked Bar Chart) */}
-            <div className="lg:col-span-4 flex flex-col">
+            <div className="lg:col-span-4 flex flex-col h-full">
               <FinancialTrendCard trendData={activePlantData.trendData} />
             </div>
 
             {/* Key Takeaway Card (Dynamically rendered from API response) */}
-            <div className="lg:col-span-3 flex flex-col">
+            <div className="lg:col-span-3 flex flex-col h-full">
               <KeyTakeawayCard
                 totalExposure={activePlantData.totalExposure}
                 keyTakeaway={activePlantData.keyTakeaway}
@@ -207,18 +206,18 @@ export default function App() {
           </div>
         </section>
 
-        {/* ROW 3: Saving Opportunities, Input Assumptions & Next Steps */}
+        {/* ROW 3: Saving Opportunities & Input Assumptions */}
         <section aria-label="Actionable Interventions & Assumptions">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 3xl:gap-4 4xl:gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 3xl:gap-4 4xl:gap-5 items-stretch">
             {/* Saving Opportunities Table */}
-            <div className="lg:col-span-5 flex flex-col">
+            <div className="lg:col-span-7 flex flex-col h-full">
               <SavingOpportunitiesCard
                 opportunities={activePlantData.savingOpportunities}
               />
             </div>
 
             {/* Input Assumptions (with interactive edit modal & API saving) */}
-            <div className="lg:col-span-4 flex flex-col">
+            <div className="lg:col-span-5 flex flex-col h-full">
               <InputAssumptionsCard
                 selectedAsset={selectedAsset}
                 assumptions={assumptions}
@@ -226,11 +225,6 @@ export default function App() {
                 onSaveToApi={handleSaveAssumptionsToApi}
                 onResetAssumptions={handleResetAssumptions}
               />
-            </div>
-
-            {/* Next Steps & Quote Card */}
-            <div className="lg:col-span-3 flex flex-col">
-              <NextStepsCard />
             </div>
           </div>
         </section>

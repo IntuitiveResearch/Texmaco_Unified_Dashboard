@@ -80,11 +80,109 @@ function getCacheKey(machine: string, startDate: string, endDate: string): strin
   return `welding_${machine}_${startDate}_${endDate}`;
 }
 
+export function normalizeWeldingData(data: WeldingApiResponse): WeldingApiResponse {
+  if (!data || !data.operational_summary) return data;
+
+  const os = data.operational_summary;
+  const cycleCount = Number(
+    os.total_welding_cycles ||
+    data.current_cycle_features?.cycle_count ||
+    data.latest_cycle_number ||
+    0
+  );
+
+  const rawPositioningSeconds = os.positioning_time?.seconds ?? 0;
+  const rawPositioningHours = os.positioning_time?.hours ?? 0;
+
+  // The /welding route no longer reports positioning time (fields are 0).
+  // Calculate positioning time from cycle count and adjust idle time.
+  if (rawPositioningSeconds === 0 && rawPositioningHours === 0) {
+    const calculatedPositioningSeconds = cycleCount * 300;
+    const calculatedPositioningHours = calculatedPositioningSeconds / 3600;
+
+    const distributionIdle = data.runtime_distribution?.distribution?.find(
+      (d) => d.state === 'IDLE' || d.label?.toLowerCase() === 'idle'
+    );
+    const rawIdleSeconds = Number(
+      os.actual_idle_time?.seconds ||
+      os.idle_time?.seconds ||
+      distributionIdle?.seconds ||
+      0
+    );
+
+    const calculatedIdleSeconds = Math.max(0, rawIdleSeconds - calculatedPositioningSeconds);
+    const calculatedIdleHours = calculatedIdleSeconds / 3600;
+
+    const normalizedSummary: WeldingOperationalSummary = {
+      ...os,
+      positioning_time: {
+        seconds: calculatedPositioningSeconds,
+        hours: Number(calculatedPositioningHours.toFixed(2)),
+      },
+      idle_time: {
+        seconds: calculatedIdleSeconds,
+        hours: Number(calculatedIdleHours.toFixed(2)),
+      },
+      actual_idle_time: {
+        seconds: rawIdleSeconds,
+        hours: Number((rawIdleSeconds / 3600).toFixed(2)),
+      },
+    };
+
+    let normalizedRuntimeDistribution = data.runtime_distribution;
+    if (normalizedRuntimeDistribution && Array.isArray(normalizedRuntimeDistribution.distribution)) {
+      const totalSec = normalizedRuntimeDistribution.total_seconds || 1;
+      let hasPositioning = false;
+
+      const updatedDist = normalizedRuntimeDistribution.distribution.map((item) => {
+        if (item.state === 'IDLE' || item.label?.toLowerCase() === 'idle') {
+          return {
+            ...item,
+            seconds: calculatedIdleSeconds,
+            percentage: Number(((calculatedIdleSeconds / totalSec) * 100).toFixed(2)),
+          };
+        }
+        if (item.state === 'POSITIONING' || item.label?.toLowerCase() === 'positioning') {
+          hasPositioning = true;
+          return {
+            ...item,
+            seconds: calculatedPositioningSeconds,
+            percentage: Number(((calculatedPositioningSeconds / totalSec) * 100).toFixed(2)),
+          };
+        }
+        return item;
+      });
+
+      if (!hasPositioning && calculatedPositioningSeconds > 0) {
+        updatedDist.push({
+          state: 'POSITIONING',
+          label: 'Positioning',
+          seconds: calculatedPositioningSeconds,
+          percentage: Number(((calculatedPositioningSeconds / totalSec) * 100).toFixed(2)),
+        });
+      }
+
+      normalizedRuntimeDistribution = {
+        ...normalizedRuntimeDistribution,
+        distribution: updatedDist,
+      };
+    }
+
+    return {
+      ...data,
+      operational_summary: normalizedSummary,
+      runtime_distribution: normalizedRuntimeDistribution,
+    };
+  }
+
+  return data;
+}
+
 export function getCachedWeldingData(machine: string, startDate: string, endDate: string): WeldingApiResponse | null {
   const key = getCacheKey(machine, startDate, endDate);
   const inMem = memoryCache.get(key);
   if (inMem && Date.now() - inMem.timestamp < CACHE_TTL_MS) {
-    return inMem.data;
+    return normalizeWeldingData(inMem.data);
   }
   if (typeof window !== 'undefined' && window.sessionStorage) {
     try {
@@ -92,8 +190,9 @@ export function getCachedWeldingData(machine: string, startDate: string, endDate
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Date.now() - parsed.timestamp < CACHE_TTL_MS) {
-          memoryCache.set(key, parsed);
-          return parsed.data;
+          const normalized = normalizeWeldingData(parsed.data);
+          memoryCache.set(key, { data: normalized, timestamp: parsed.timestamp });
+          return normalized;
         }
       }
     } catch {
@@ -105,7 +204,8 @@ export function getCachedWeldingData(machine: string, startDate: string, endDate
 
 export function setCachedWeldingData(machine: string, startDate: string, endDate: string, data: WeldingApiResponse): void {
   const key = getCacheKey(machine, startDate, endDate);
-  const entry = { data, timestamp: Date.now() };
+  const normalized = normalizeWeldingData(data);
+  const entry = { data: normalized, timestamp: Date.now() };
   memoryCache.set(key, entry);
   if (typeof window !== 'undefined' && window.sessionStorage) {
     try {
@@ -124,7 +224,7 @@ export async function fetchWeldingData(
 ): Promise<WeldingApiResponse> {
   if (!forceRefresh) {
     const cached = getCachedWeldingData(machine, startDate, endDate);
-    if (cached) return cached;
+    if (cached) return normalizeWeldingData(cached);
   }
 
   const query = `machine=${encodeURIComponent(machine)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
@@ -135,8 +235,9 @@ export async function fetchWeldingData(
     if (proxyRes.ok) {
       const json = await proxyRes.json();
       if (json && json.operational_summary) {
-        setCachedWeldingData(machine, startDate, endDate, json);
-        return json as WeldingApiResponse;
+        const normalized = normalizeWeldingData(json as WeldingApiResponse);
+        setCachedWeldingData(machine, startDate, endDate, normalized);
+        return normalized;
       }
     }
   } catch {
@@ -155,6 +256,7 @@ export async function fetchWeldingData(
     throw new Error('Invalid welding API payload structure');
   }
 
-  setCachedWeldingData(machine, startDate, endDate, result);
-  return result as WeldingApiResponse;
+  const normalized = normalizeWeldingData(result as WeldingApiResponse);
+  setCachedWeldingData(machine, startDate, endDate, normalized);
+  return normalized;
 }

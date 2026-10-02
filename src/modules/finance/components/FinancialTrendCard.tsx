@@ -24,7 +24,7 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col h-auto min-h-0">
+    <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col h-full min-h-0 justify-between">
       {/* Header with Title & Filter Pills */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-100">
         <h2 className="text-xs sm:text-sm font-bold text-slate-800 tracking-tight">
@@ -53,9 +53,9 @@ export const FinancialTrendCard: React.FC<FinancialTrendCardProps> = ({ trendDat
       </div>
 
       {/* Chart Canvas & Legend */}
-      <div className="mt-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-2.5">
+      <div className="mt-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-2.5 flex-1 min-h-0">
         {/* Main Chart Area */}
-        <div className="w-full sm:flex-1 h-34 sm:h-36 relative flex flex-col justify-end">
+        <div className="w-full sm:flex-1 h-full min-h-[136px] sm:min-h-[142px] relative flex flex-col justify-end">
           {/* Y Axis Guide Lines & Labels */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-5 pl-7">
             {yTicks.map((tick) => (

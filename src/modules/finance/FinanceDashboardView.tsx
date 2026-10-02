@@ -5,7 +5,6 @@ import { FinancialTrendCard } from './components/FinancialTrendCard';
 import { KeyTakeawayCard } from './components/KeyTakeawayCard';
 import { SavingOpportunitiesCard } from './components/SavingOpportunitiesCard';
 import { InputAssumptionsCard } from './components/InputAssumptionsCard';
-import { NextStepsCard } from './components/NextStepsCard';
 import { ASSET_OPTIONS, INITIAL_ASSUMPTIONS, PLANTS_DATA } from './mockData';
 import { AssetOption, FinancialAssumption, PlantData } from './types';
 import {
@@ -150,8 +149,8 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
     }
 
     return (
-      <div className="w-full max-w-none flex-1 overflow-y-auto overflow-x-hidden bg-[#f4f7fb] box-border p-2 sm:p-2.5 lg:p-3 2xl:p-3.5 min-h-0">
-        <div className="w-full max-w-none flex flex-col gap-2 sm:gap-2.5 lg:gap-3">
+      <div className="w-full max-w-none flex-1 overflow-y-auto overflow-x-hidden bg-[#f4f7fb] box-border p-2 sm:p-2.5 lg:p-3 min-h-0 h-full flex flex-col justify-between">
+        <div className="w-full max-w-none flex-1 flex flex-col justify-between gap-2 sm:gap-2.5 min-h-0 h-full">
           {/* Toast */}
           {notification && (
             <div className="fixed bottom-4 right-4 z-50 bg-slate-900 text-white text-xs font-medium px-3.5 py-2 rounded-lg shadow-xl border border-slate-700 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200 max-w-md">
@@ -161,8 +160,8 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
           )}
 
           {/* ROW 1: 5 KPI Metric Cards */}
-          <section aria-label="Key Performance Indicators" className={`w-full transition-opacity duration-200 ${isLoadingIntel ? 'opacity-70' : 'opacity-100'}`}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-2.5 items-start">
+          <section aria-label="Key Performance Indicators" className={`w-full shrink-0 transition-opacity duration-200 ${isLoadingIntel ? 'opacity-70' : 'opacity-100'}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-2.5 items-stretch">
               {activePlantData.kpis.map((kpi) => (
                 <KpiCard key={kpi.id} kpi={kpi} />
               ))}
@@ -170,10 +169,10 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
           </section>
 
           {/* ROW 2: Charts & Executive Takeaway */}
-          <section aria-label="Financial Visualizations" className={`w-full transition-opacity duration-200 ${isLoadingIntel ? 'opacity-70' : 'opacity-100'}`}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 items-start">
+          <section aria-label="Financial Visualizations" className={`w-full flex-1 min-h-0 transition-opacity duration-200 ${isLoadingIntel ? 'opacity-70' : 'opacity-100'}`}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 items-stretch h-full">
               {/* Cost Distribution (Donut Chart) */}
-              <div className="lg:col-span-5 min-w-0">
+              <div className="lg:col-span-5 min-w-0 h-full flex flex-col">
                 <CostDistributionCard
                   categories={activePlantData.costCategories}
                   totalExposure={activePlantData.totalExposure}
@@ -182,12 +181,12 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
               </div>
 
               {/* Financial Exposure Trend (Stacked Bar Chart) */}
-              <div className="lg:col-span-4 min-w-0">
+              <div className="lg:col-span-4 min-w-0 h-full flex flex-col">
                 <FinancialTrendCard trendData={activePlantData.trendData} />
               </div>
 
               {/* Key Takeaway Card */}
-              <div className="lg:col-span-3 min-w-0">
+              <div className="lg:col-span-3 min-w-0 h-full flex flex-col">
                 <KeyTakeawayCard
                   totalExposure={activePlantData.totalExposure}
                   keyTakeaway={activePlantData.keyTakeaway}
@@ -196,18 +195,18 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
             </div>
           </section>
 
-          {/* ROW 3: Saving Opportunities, Input Assumptions & Next Steps */}
-          <section aria-label="Actionable Interventions" className="w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 items-start">
+          {/* ROW 3: Saving Opportunities & Input Assumptions */}
+          <section aria-label="Actionable Interventions" className="w-full flex-1 min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 items-stretch h-full">
               {/* Saving Opportunities Table */}
-              <div className="lg:col-span-5 min-w-0">
+              <div className="lg:col-span-7 min-w-0 h-full flex flex-col">
                 <SavingOpportunitiesCard
                   opportunities={activePlantData.savingOpportunities}
                 />
               </div>
 
               {/* Input Assumptions */}
-              <div className="lg:col-span-4 min-w-0">
+              <div className="lg:col-span-5 min-w-0 h-full flex flex-col">
                 <InputAssumptionsCard
                   selectedAsset={selectedAsset}
                   assumptions={assumptions}
@@ -215,11 +214,6 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
                   onSaveToApi={handleSaveAssumptionsToApi}
                   onResetAssumptions={handleResetAssumptions}
                 />
-              </div>
-
-              {/* Next Steps Card */}
-              <div className="lg:col-span-3 min-w-0">
-                <NextStepsCard />
               </div>
             </div>
           </section>

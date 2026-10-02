@@ -36,6 +36,8 @@ export interface SavingOpportunity {
   currentSituation: string;
   estimatedValueRange: string;
   priority: 'High' | 'Medium' | 'Low';
+  minValue?: number;
+  maxValue?: number;
 }
 
 export interface FinancialAssumption {

@@ -60,7 +60,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({ kpi }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col justify-start h-auto min-h-0 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col justify-between h-full min-h-0 hover:shadow-md transition-shadow">
       {/* Top row: Icon + Title */}
       <div className="flex items-center gap-2">
         <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border flex items-center justify-center shrink-0 ${getIconContainerStyle()}`}>

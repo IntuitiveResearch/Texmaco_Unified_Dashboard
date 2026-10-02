@@ -118,24 +118,47 @@ function MachineCard({
 // Operational summary displaying exactly the items under operational_summary
 // Strictly excluding offline_time and actual_idle_time as requested
 function OperationalSummary({
-  summary,
+  summary: rawSummary,
   period,
 }: {
   summary: WeldingOperationalSummary;
   period: string;
 }) {
+  const rawPosSec = rawSummary.positioning_time?.seconds ?? 0;
+  const rawPosHrs = rawSummary.positioning_time?.hours ?? 0;
+  const cycles = rawSummary.total_welding_cycles ?? 0;
+
+  const calcPosSec = (rawPosSec === 0 && rawPosHrs === 0) ? (cycles * 300) : rawPosSec;
+  const calcPosHrs = (rawPosSec === 0 && rawPosHrs === 0) ? (calcPosSec / 3600) : rawPosHrs;
+
+  const rawIdleSec = rawSummary.actual_idle_time?.seconds ?? rawSummary.idle_time?.seconds ?? 0;
+  const calcIdleSec = (rawPosSec === 0 && rawPosHrs === 0) ? Math.max(0, rawIdleSec - calcPosSec) : (rawSummary.idle_time?.seconds ?? 0);
+  const calcIdleHrs = (rawPosSec === 0 && rawPosHrs === 0) ? (calcIdleSec / 3600) : (rawSummary.idle_time?.hours ?? 0);
+
+  const summary = {
+    ...rawSummary,
+    positioning_time: {
+      seconds: calcPosSec,
+      hours: calcPosHrs,
+    },
+    idle_time: {
+      seconds: calcIdleSec,
+      hours: calcIdleHrs,
+    },
+  };
+
   const items: { icon: LucideIcon; label: string; val: string; unit?: string; color?: string }[] = [
     {
       icon: CheckCircle2,
       label: 'Availability',
-      val: summary.availability_percentage.toFixed(1),
+      val: summary.availability_percentage.toFixed(2),
       unit: '%',
       color: '#10bf83',
     },
     {
       icon: BarChart3,
       label: 'Utilization',
-      val: summary.utilization_percentage.toFixed(1),
+      val: summary.utilization_percentage.toFixed(2),
       unit: '%',
       color: '#2378f2',
     },

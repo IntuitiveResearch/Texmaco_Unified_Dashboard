@@ -20,6 +20,7 @@ import { ScreenFitContainer } from '../../components/ScreenFitContainer';
 import {
   fetchWeldingData,
   getCachedWeldingData,
+  normalizeWeldingData,
   WeldingApiResponse,
 } from './services/weldingService';
 
@@ -112,9 +113,10 @@ function appendTrendSample(
 }
 
 function buildRoboOperationalKpi(
-  welding: WeldingApiResponse,
+  rawWelding: WeldingApiResponse,
   dates: { start: string; end: string }
 ): OperationalKpiResponse {
+  const welding = normalizeWeldingData(rawWelding);
   const os = welding.operational_summary || {
     availability_percentage: 98.92,
     utilization_percentage: 8.42,

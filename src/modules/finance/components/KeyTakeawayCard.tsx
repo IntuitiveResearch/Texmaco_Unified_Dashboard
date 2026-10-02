@@ -34,9 +34,9 @@ export const KeyTakeawayCard: React.FC<KeyTakeawayCardProps> = ({
     : Number((exposureLakhs * (reductionPercent / 100)).toFixed(2));
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col h-auto min-h-0">
+    <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col h-full min-h-0 justify-between">
       {/* Title with Lightbulb */}
-      <div>
+      <div className="flex flex-col flex-1 justify-start">
         <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100">
           <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
             <Lightbulb className="w-3.5 h-3.5" />
@@ -81,7 +81,7 @@ export const KeyTakeawayCard: React.FC<KeyTakeawayCardProps> = ({
       </div>
 
       {/* Target Callout Box */}
-      <div className="mt-2.5 bg-sky-50/90 border border-sky-200/90 rounded p-1.5 px-2 flex items-start gap-2">
+      <div className="mt-2.5 bg-sky-50/90 border border-sky-200/90 rounded p-1.5 px-2 flex items-start gap-2 mt-auto">
         <div className="w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
           <Target className="w-3 h-3" />
         </div>

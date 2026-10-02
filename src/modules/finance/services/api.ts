@@ -402,6 +402,8 @@ export function mapFinancialIntelToDashboardData(
       currentSituation: `${item.current_value.toLocaleString('en-IN')} ${item.current_unit}`,
       estimatedValueRange: estimatedRange,
       priority: priorityNormalized,
+      minValue: Number((item.estimated_min_value / 100000).toFixed(2)),
+      maxValue: Number((item.estimated_max_value / 100000).toFixed(2)),
     };
   });
 

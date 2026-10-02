@@ -72,14 +72,14 @@ export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
   const standardItems = [
     {
       label: 'Availability',
-      val: availabilityVal.toFixed(1),
+      val: availabilityVal.toFixed(2),
       unit: '%',
       icon: CheckCircle2,
       color: '#10bf83',
     },
     {
       label: 'Utilization',
-      val: utilizationVal.toFixed(1),
+      val: utilizationVal.toFixed(2),
       unit: '%',
       icon: BarChart2,
       color: '#2378f2',
@@ -154,7 +154,7 @@ export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
     : standardItems;
 
   if (isRobo) {
-    const ws = weldingSummary || {
+    const rawWs = weldingSummary || {
       availability_percentage: 98.92,
       utilization_percentage: 8.42,
       active_welding_time: { seconds: 5905, hours: 1.64 },
@@ -167,20 +167,44 @@ export const OperationalSummary: React.FC<OperationalSummaryProps> = ({
       average_cycle_time_seconds: 57.33,
     };
 
+    // Calculate positioning time from cycle count if 0, and adjust idle time
+    const rawPosSeconds = rawWs.positioning_time?.seconds ?? 0;
+    const rawPosHours = rawWs.positioning_time?.hours ?? 0;
+    const cycles = rawWs.total_welding_cycles ?? 0;
+
+    const calcPosSeconds = (rawPosSeconds === 0 && rawPosHours === 0) ? (cycles * 300) : rawPosSeconds;
+    const calcPosHours = (rawPosSeconds === 0 && rawPosHours === 0) ? (calcPosSeconds / 3600) : rawPosHours;
+
+    const rawIdleSeconds = rawWs.actual_idle_time?.seconds ?? rawWs.idle_time?.seconds ?? 0;
+    const calcIdleSeconds = (rawPosSeconds === 0 && rawPosHours === 0) ? Math.max(0, rawIdleSeconds - calcPosSeconds) : (rawWs.idle_time?.seconds ?? 0);
+    const calcIdleHours = (rawPosSeconds === 0 && rawPosHours === 0) ? (calcIdleSeconds / 3600) : (rawWs.idle_time?.hours ?? 0);
+
+    const ws = {
+      ...rawWs,
+      positioning_time: {
+        seconds: calcPosSeconds,
+        hours: calcPosHours,
+      },
+      idle_time: {
+        seconds: calcIdleSeconds,
+        hours: calcIdleHours,
+      },
+    };
+
     const periodLabel = weldingPeriod || '2026-09-29 to 2026-09-30';
 
     const roboItems = [
       {
         icon: CheckCircle2,
         label: 'Availability',
-        val: ws.availability_percentage.toFixed(1),
+        val: ws.availability_percentage.toFixed(2),
         unit: '%',
         color: '#10bf83',
       },
       {
         icon: BarChart3,
         label: 'Utilization',
-        val: ws.utilization_percentage.toFixed(1),
+        val: ws.utilization_percentage.toFixed(2),
         unit: '%',
         color: '#2378f2',
       },

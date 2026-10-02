@@ -38,10 +38,9 @@ export const InputAssumptionsCard: React.FC<InputAssumptionsCardProps> = ({
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col h-auto min-h-0">
+      <div className="bg-white rounded-lg border border-slate-200/90 shadow-xs p-2.5 sm:p-3 flex flex-col h-full min-h-0 justify-between">
         {/* Header with Title & Action Buttons */}
-        <div>
-          <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-1 border-b border-slate-100">
             <div className="flex items-center gap-1.5">
               <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                 <Settings className="w-3.5 h-3.5" />
@@ -109,10 +108,10 @@ export const InputAssumptionsCard: React.FC<InputAssumptionsCardProps> = ({
               : assumptions.slice(Math.ceil(assumptions.length / 2));
 
             return (
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 items-start">
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 items-stretch flex-1 min-h-0">
                 {/* LEFT COLUMN: Very light subtle cool blue tint */}
-                <div className="bg-[#F4F8FF] border border-[#DCE9FA] rounded-lg p-2 sm:p-2.5 flex flex-col justify-start">
-                  <div className="flex flex-col">
+                <div className="bg-[#F4F8FF] border border-[#DCE9FA] rounded-lg p-2 sm:p-2.5 flex flex-col justify-between flex-1 h-full min-h-0">
+                  <div className="flex flex-col justify-around flex-1 h-full">
                     {leftAssumptions.map((item) => (
                       <div
                         key={item.id}
@@ -133,8 +132,8 @@ export const InputAssumptionsCard: React.FC<InputAssumptionsCardProps> = ({
                 </div>
 
                 {/* RIGHT COLUMN: Very light subtle light green/teal tint */}
-                <div className="bg-[#F3FAF7] border border-[#DCF1EA] rounded-lg p-2 sm:p-2.5 flex flex-col justify-start">
-                  <div className="flex flex-col">
+                <div className="bg-[#F3FAF7] border border-[#DCF1EA] rounded-lg p-2 sm:p-2.5 flex flex-col justify-between flex-1 h-full min-h-0">
+                  <div className="flex flex-col justify-around flex-1 h-full">
                     {rightAssumptions.map((item) => (
                       <div
                         key={item.id}
@@ -156,7 +155,6 @@ export const InputAssumptionsCard: React.FC<InputAssumptionsCardProps> = ({
               </div>
             );
           })()}
-        </div>
       </div>
 
       {/* Edit Modal with API Save capability */}

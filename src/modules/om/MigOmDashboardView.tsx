@@ -21,8 +21,8 @@ const migLatest = {
 };
 
 const metrics = [
-  { label: 'Availability', value: `${MIG_OPERATIONAL_SUMMARY.availability.toFixed(1)}%`, icon: CheckCircle2, color: '#10bf83' },
-  { label: 'Utilization', value: `${MIG_OPERATIONAL_SUMMARY.utilization.toFixed(1)}%`, icon: BarChart3, color: '#2378f2' },
+  { label: 'Availability', value: `${MIG_OPERATIONAL_SUMMARY.availability.toFixed(2)}%`, icon: CheckCircle2, color: '#10bf83' },
+  { label: 'Utilization', value: `${MIG_OPERATIONAL_SUMMARY.utilization.toFixed(2)}%`, icon: BarChart3, color: '#2378f2' },
   { label: 'Active welding time', value: `${MIG_OPERATIONAL_SUMMARY.activeWeldingHours.toFixed(2)} hrs`, icon: Clock3, color: '#00be85' },
   { label: 'Idle time', value: `${MIG_OPERATIONAL_SUMMARY.idleHours.toFixed(2)} hrs`, icon: PauseCircle, color: '#f59e0b' },
   { label: 'Welding cycles', value: String(MIG_OPERATIONAL_SUMMARY.weldingCycles), icon: Activity, color: '#8c25f5' },
