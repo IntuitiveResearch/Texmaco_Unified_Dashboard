@@ -113,14 +113,23 @@ const createVisualSummary = (
     offline_seconds: offlineSeconds,
   };
 
+  const availRows = filterByVisualDates(graphs.availability, visualDates);
+  const avgAvailability = availRows.length > 0
+    ? availRows.reduce((sum, item) => sum + toFiniteNumber(item.value), 0) / availRows.length
+    : summary.availability;
+
   if (isCncOrRobo) {
     const cycleRows = filterByVisualDates(graphs.cycle_count, visualDates);
+    const utilRows = filterByVisualDates(graphs.utilization, visualDates);
+    const avgUtil = utilRows.length > 0
+      ? utilRows.reduce((sum, item) => sum + toFiniteNumber(item.value ?? item.loaded), 0) / utilRows.length
+      : summary.avg_utilization;
 
     return {
       ...visualSummary,
       idle_seconds: idleSeconds > 0 ? idleSeconds : summary.idle_seconds,
-      availability: summary.availability,
-      avg_utilization: summary.avg_utilization,
+      availability: avgAvailability,
+      avg_utilization: avgUtil,
       cycle_count: cycleRows.length > 0 ? sumBy(cycleRows, (item) => item.cycle_count) : summary.cycle_count,
     };
   }
@@ -136,7 +145,7 @@ const createVisualSummary = (
     loaded_runtime_seconds: loadedRuntimeSeconds,
     unloaded_runtime_seconds: unloadedRuntimeSeconds,
     idle_runtime_seconds: idleRuntimeSeconds,
-    availability: summary.availability,
+    availability: avgAvailability > 0 ? avgAvailability : summary.availability,
     runtime_percentage: actualPeriodSeconds > 0 ? (runtimeSeconds / actualPeriodSeconds) * 100 : summary.runtime_percentage,
     downtime_percentage: actualPeriodSeconds > 0 ? (downtimeSeconds / actualPeriodSeconds) * 100 : summary.downtime_percentage,
     offline_percentage: actualPeriodSeconds > 0 ? (offlineSeconds / actualPeriodSeconds) * 100 : summary.offline_percentage,
@@ -151,6 +160,11 @@ const getAverageUtilization = (
   visualDates: Set<string>
 ): number => {
   if (isCncOrRobo) {
+    const utilRows = filterByVisualDates(graphs.utilization, visualDates);
+    const validRows = utilRows.filter((r) => r.value !== undefined || r.loaded !== undefined);
+    if (validRows.length > 0) {
+      return validRows.reduce((sum, item) => sum + toFiniteNumber(item.value ?? item.loaded), 0) / validRows.length;
+    }
     return toFiniteNumber(summary.avg_utilization);
   }
 
@@ -179,6 +193,8 @@ const PLANT_ID_MAP: Record<string, string> = {
   'CMP02': '011884',
   'CNC01': 'CN60I1626089',
   'ROBO01': 'PI4G/TXMMIGI/26001',
+  'Robo welder': 'PI4G/TXMMIGI/26001',
+  'Robo Welder': 'PI4G/TXMMIGI/26001',
 };
 
 const ASSET_IMAGE_MAP: Record<string, string> = {
@@ -190,6 +206,8 @@ const ASSET_IMAGE_MAP: Record<string, string> = {
   'CNC01': cnc01Img,
   'ROBO#01': robo01Img,
   'ROBO01': robo01Img,
+  'Robo welder': robo01Img,
+  'Robo Welder': robo01Img,
 };
 
 export default function App() {
@@ -759,6 +777,11 @@ export default function App() {
         <ReportModal
           compressor={compressor}
           onClose={() => setShowReportModal(false)}
+          startDate={startDate}
+          endDate={endDate}
+          datePreset={preset}
+          selectedAvailability={summary?.availability ?? null}
+          selectedUtilization={avgUtilization ?? null}
         />
       )}
 

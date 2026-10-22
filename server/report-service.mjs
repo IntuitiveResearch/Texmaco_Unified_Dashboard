@@ -70,16 +70,37 @@ async function fetchJson(fetchImpl, url, init, label) {
   }
 }
 
-export async function generateReport(asset, { env = process.env, fetchImpl = fetch, now = new Date() } = {}) {
+export async function generateReport(asset, {
+  env = process.env,
+  fetchImpl = fetch,
+  now = new Date(),
+  startDate,
+  endDate,
+  start_date,
+  end_date,
+  datePreset,
+  date_preset,
+  availability,
+  utilization,
+} = {}) {
   const canonical = canonicalAssetId(asset);
   if (!canonical || !SUPPORTED_ASSETS.includes(canonical)) {
-    throw new ReportError('Reports currently support Compressor 1, Compressor 2, CNC 1, and Robo Welder 1 only.', 400);
+    throw new ReportError('Reports currently support Compressor 1, Compressor 2, CNC 1, and Robo welder only.', 400);
   }
   if (!env.GEMINI_API_KEY?.trim()) throw new ReportError('Report service is not configured. Set GEMINI_API_KEY on the server.', 503);
   const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) throw new ReportError('GEMINI_MODEL is invalid.', 503);
 
-  const dates = reportWindow(now);
+  const defaultDates = reportWindow(now);
+  const effectiveStart = startDate || start_date || defaultDates.start_date;
+  const effectiveEnd = endDate || end_date || defaultDates.end_date;
+  const isCustomWindow = Boolean(startDate || start_date || endDate || end_date);
+  const dates = {
+    start_date: effectiveStart,
+    end_date: effectiveEnd,
+    snapshot_date: defaultDates.snapshot_date,
+    timezone: defaultDates.timezone,
+  };
   const apiId = getAssetApiIdentifier(canonical);
   const query = new URLSearchParams({ compressor: apiId, start_date: dates.snapshot_date, end_date: dates.snapshot_date, option: 'today' });
 
@@ -94,7 +115,13 @@ export async function generateReport(asset, { env = process.env, fetchImpl = fet
   ]);
 
   let input;
-  try { input = assembleReportInput(canonical, history, snapshot, now); }
+  try {
+    input = assembleReportInput(canonical, history, snapshot, now, {
+      window: isCustomWindow ? dates : undefined,
+      frontendAvailability: availability,
+      frontendUtilization: utilization,
+    });
+  }
   catch (error) { throw new ReportError(error.message); }
 
   input.knowledge_context = buildAssetKnowledge(input);
@@ -148,10 +175,14 @@ export async function generateReport(asset, { env = process.env, fetchImpl = fet
         available: reading.available, measured_at: reading.measured_at, freshness: reading.freshness,
       }])),
       kpis: {
-        availability_pct: input.historical.summary.availability,
+        availability_pct: (typeof availability === 'number' && Number.isFinite(availability))
+          ? availability
+          : input.historical.summary.availability,
         interruptions: input.historical.summary.trip_count ?? null,
         restarts: input.historical.summary.restart_count ?? null,
-        utilization_pct: input.historical.derived.mean_daily_loaded_utilization_pct,
+        utilization_pct: (typeof utilization === 'number' && Number.isFinite(utilization))
+          ? utilization
+          : input.historical.derived.mean_daily_loaded_utilization_pct,
         maximum_temperature_c: input.historical.derived.maximum_observed_temperature_c,
         peak_current_a: input.historical.derived.peak_current_a,
         today_availability_pct: input.today_kpis.availability_pct,
@@ -171,10 +202,13 @@ export async function generateReport(asset, { env = process.env, fetchImpl = fet
 // Concurrent duplicate clicks/StrictMode share a request within this server instance.
 // No stale completed-report cache; an explicit rerun fetches a new snapshot.
 const inFlight = new Map();
-export function generateReportOnce(asset) {
+export function generateReportOnce(asset, options = {}) {
   const canonical = canonicalAssetId(asset) || asset;
-  if (inFlight.has(canonical)) return inFlight.get(canonical);
-  const request = generateReport(canonical).finally(() => inFlight.delete(canonical));
-  inFlight.set(canonical, request);
+  const start = options.startDate || options.start_date || '';
+  const end = options.endDate || options.end_date || '';
+  const key = `${canonical}_${start}_${end}`;
+  if (inFlight.has(key)) return inFlight.get(key);
+  const request = generateReport(canonical, options).finally(() => inFlight.delete(key));
+  inFlight.set(key, request);
   return request;
 }

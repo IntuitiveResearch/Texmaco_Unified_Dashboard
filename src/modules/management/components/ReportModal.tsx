@@ -6,9 +6,22 @@ import type { ReportResponse } from '../reportTypes';
 interface ReportModalProps {
   compressor?: string;
   onClose: () => void;
+  startDate?: string;
+  endDate?: string;
+  datePreset?: string;
+  selectedAvailability?: number | null;
+  selectedUtilization?: number | null;
 }
 
-export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps) {
+export function ReportModal({
+  compressor = 'CMP#01',
+  onClose,
+  startDate,
+  endDate,
+  datePreset,
+  selectedAvailability,
+  selectedUtilization,
+}: ReportModalProps) {
   const [status, setStatus] = useState<'generating' | 'completed' | 'failed'>('generating');
   const [result, setResult] = useState<ReportResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -19,10 +32,17 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
     const version = ++requestVersion.current;
     setStatus('generating'); setResult(null); setError(null);
     try {
-      const isAllowed = ['CMP#01', 'CMP#02', 'CNC#01', 'ROBO#01'].includes(compressor) ||
-        compressor.includes('TXMCNCI') || compressor.includes('TXMMIGI');
-      if (!isAllowed) throw new Error('Reports currently support Compressor 1, Compressor 2, CNC 1, and Robo Welder 1 only.');
-      const report = await requestCompressorReport(compressor);
+      const isAllowed = ['CMP#01', 'CMP#02', 'CNC#01', 'ROBO#01', 'Robo welder', 'Robo Welder'].includes(compressor) ||
+        compressor.includes('TXMCNCI') || compressor.includes('TXMMIGI') ||
+        compressor.toLowerCase().includes('robo') || compressor.toLowerCase().includes('welder');
+      if (!isAllowed) throw new Error('Reports currently support Compressor 1, Compressor 2, CNC 1, and Robo welder only.');
+      const report = await requestCompressorReport(compressor, {
+        startDate,
+        endDate,
+        datePreset,
+        availability: selectedAvailability,
+        utilization: selectedUtilization,
+      });
       if (version !== requestVersion.current) return;
       setResult(report); setStatus('completed');
     } catch (err) {
@@ -31,7 +51,7 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
       setError(err instanceof Error && err.name === 'TimeoutError' ? 'Report generation timed out. Please retry.'
         : err instanceof Error ? err.message : 'Report generation failed. Please retry.');
     }
-  }, [compressor]);
+  }, [compressor, startDate, endDate, datePreset, selectedAvailability, selectedUtilization]);
 
   useEffect(() => {
     void startAnalysis();
@@ -60,7 +80,10 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
             <div className="w-10 h-10 rounded-xl bg-[var(--chip)] flex items-center justify-center text-[var(--cyan)]"><Bot size={22} /></div>
             <div>
               <h2 id="report-title" className="text-[17px] font-bold text-[var(--text)]">{status === 'generating' ? 'Running AI Diagnostics' : advisoryTitle}</h2>
-              <span className="text-[12px] text-[var(--muted)]">{isRobo ? 'Robot welder' : compressor}</span>
+              <span className="text-[12px] text-[var(--muted)]">
+                {isRobo ? 'Robot welder' : compressor}
+                {startDate && endDate ? `  ·  ${startDate} to ${endDate}` : ''}
+              </span>
             </div>
           </div>
           <button onClick={onClose} aria-label="Close report" className="p-2 text-[var(--muted)] hover:text-[var(--text)]"><X size={18} /></button>

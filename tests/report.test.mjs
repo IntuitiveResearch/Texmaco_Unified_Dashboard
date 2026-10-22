@@ -244,3 +244,35 @@ test('generateReport dispatches correct upstream API identifiers and prompts wit
     assert.equal(result.context.kpis.cycle_count, 43);
   }
 });
+
+test('generateReport uses selected date range and frontend availability/utilization metrics', async () => {
+  const calls = [];
+  const result = await generateReport('CNC#01', {
+    startDate: '2026-10-18',
+    endDate: '2026-10-22',
+    availability: 88.5,
+    utilization: 64.2,
+    env: { GEMINI_API_KEY: 'test-key', GEMINI_MODEL: 'test-model' },
+    now,
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      if (url.endsWith('/dashboard')) return Response.json(cncHistory());
+      if (url.includes('/operational_kpi')) return Response.json({});
+      return Response.json({
+        candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ ...validReport(), root_causes: [] }) }] } }],
+      });
+    },
+  });
+
+  const dashboardBody = JSON.parse(calls[0].options.body);
+  assert.equal(dashboardBody.start_date, '2026-10-18');
+  assert.equal(dashboardBody.end_date, '2026-10-22');
+  assert.equal(result.context.start_date, '2026-10-18');
+  assert.equal(result.context.end_date, '2026-10-22');
+  assert.equal(result.context.kpis.availability_pct, 88.5);
+  assert.equal(result.context.kpis.utilization_pct, 64.2);
+  assert.equal(result.context.trends.length, 5);
+  assert.equal(result.context.trends[0].date, '2026-10-18');
+  assert.equal(result.context.trends[4].date, '2026-10-22');
+});
+

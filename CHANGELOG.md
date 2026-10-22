@@ -20,7 +20,9 @@ This file records changes to the Texmaco Unified Dashboard in plain language. Fo
   - Dynamic top KPI tiles: displays Cycle Count and Utilization % in place of temperature/vibration for CNC and Robo Welder.
   - Page 2 vector trend charts display Daily Availability % and Uptime/Downtime hours for all four assets.
   - Updated Robot Welder asset identifier in the PDF advisory banner and report modal to display "Robot welder" only.
-- Added automated unit and integration tests covering telemetry ingestion, prompt dispatch, upstream mapping, brand neutrality, and PDF generation for all four assets (41 tests passing).
+  - Replaced instances of `ROBO01` with `Robo welder` across UI modal titles, PDF document properties/metadata, report downloads, and equipment mapping.
+  - Enabled selected date range support: the frontend now provides exact availability and utilization calculated for the selected date or date range to the report, and the report now renders trends, KPI tiles, and captions for the selected date range instead of hardcoding the last 7 days.
+- Added automated unit and integration tests covering telemetry ingestion, prompt dispatch, upstream mapping, brand neutrality, selected date range trends, and PDF generation for all four assets (43 tests passing).
 
 ## 2026-10-12 — Texmaco branding, management alerts & equipment metadata
 

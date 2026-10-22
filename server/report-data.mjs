@@ -83,10 +83,10 @@ function sensor(raw, kind, now) {
   };
 }
 
-export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Date()) {
+export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Date(), options = {}) {
   const canonical = canonicalAssetId(asset);
   if (!canonical || !SUPPORTED_ASSETS.includes(canonical)) {
-    throw new Error('Reports support Compressor 1, Compressor 2, CNC 1, and Robo Welder 1 only.');
+    throw new Error('Reports support Compressor 1, Compressor 2, CNC 1, and Robo welder only.');
   }
 
   const isCnc = canonical === 'CNC#01';
@@ -103,7 +103,8 @@ export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Da
     }
   }
 
-  const window = reportWindow(now);
+  const isCustomWindow = Boolean(options.window);
+  const window = options.window || reportWindow(now);
   const equipment = getAssetEquipment(canonical);
 
   const limitations = [];
@@ -121,7 +122,10 @@ export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Da
   const summary = pickNumbers(history.summary, SUMMARY_FIELDS);
   const daily = {};
   const missingDates = {};
-  const requestedDates = Array.from({ length: 30 }, (_, i) => new Date(Date.parse(`${window.start_date}T00:00:00Z`) + i * DAY).toISOString().slice(0, 10));
+  const startDateMs = Date.parse(`${window.start_date}T00:00:00Z`);
+  const endDateMs = Date.parse(`${window.end_date}T00:00:00Z`);
+  const dayCount = Math.max(1, Math.min(60, Math.round((endDateMs - startDateMs) / DAY) + 1));
+  const requestedDates = Array.from({ length: dayCount }, (_, i) => new Date(startDateMs + i * DAY).toISOString().slice(0, 10));
 
   const graphSchema = isCncOrRobo ? GRAPH_FIELDS_CNC_ROBO : GRAPH_FIELDS_COMPRESSOR;
 
@@ -198,7 +202,8 @@ export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Da
     limitations.push('Today-specific availability and interruptions are unavailable: snapshot aggregate date scope is not confirmed.');
   }
 
-  const chart_days = requestedDates.slice(-7).map(date => {
+  const chartDates = isCustomWindow ? requestedDates : requestedDates.slice(-7);
+  const chart_days = chartDates.map(date => {
     const runtime = (daily.runtime_distribution || []).find(row => row.date === date);
     const availability = (daily.availability || []).find(row => row.date === date)?.value ?? null;
     return {
@@ -209,17 +214,47 @@ export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Da
     };
   });
 
+  const availValues = (daily.availability || []).map(r => r.value).filter(v => v !== null && v >= 0 && v <= 100);
+  const meanDailyAvailability = availValues.length
+    ? availValues.reduce((a, b) => a + b, 0) / availValues.length
+    : (summary.availability ?? null);
+
+  const effectiveAvailability = (typeof options.frontendAvailability === 'number' && Number.isFinite(options.frontendAvailability))
+    ? options.frontendAvailability
+    : (summary.availability && summary.availability > 0)
+    ? summary.availability
+    : meanDailyAvailability;
+
+  const effectiveUtilization = (typeof options.frontendUtilization === 'number' && Number.isFinite(options.frontendUtilization))
+    ? options.frontendUtilization
+    : utilizations.length
+    ? utilizations.reduce((a, b) => a + b, 0) / utilizations.length
+    : (summary.avg_utilization ?? null);
+
   return {
     asset: { id: canonical, original_id: asset, device_type: equipment.device_type, plant: 'Texmaco - Agarpara', equipment },
-    report_context: { ...window, fetched_at: now.toISOString(), scope: '30 completed calendar days plus latest available snapshot' },
+    report_context: {
+      ...window,
+      fetched_at: now.toISOString(),
+      scope: `${requestedDates.length} completed calendar days plus latest available snapshot`,
+    },
     historical: {
-      summary, daily, chart_days,
+      summary: {
+        ...summary,
+        availability: effectiveAvailability,
+        avg_utilization: effectiveUtilization,
+      },
+      daily,
+      chart_days,
       time_breakdown: history.graphs?.time_breakdown || null,
-      coverage: { requested_days: 30, available_days: observed.size, missing_dates: missing, missing_dates_by_series: missingDates },
+      coverage: {
+        requested_days: requestedDates.length,
+        available_days: observed.size,
+        missing_dates: missing,
+        missing_dates_by_series: missingDates,
+      },
       derived: {
-        mean_daily_loaded_utilization_pct: utilizations.length
-          ? utilizations.reduce((a, b) => a + b, 0) / utilizations.length
-          : (summary.avg_utilization ?? null),
+        mean_daily_loaded_utilization_pct: effectiveUtilization,
         utilization_observed_days: utilizations.length,
         maximum_observed_temperature_c: tempMaxima.length ? Math.max(...tempMaxima) : (summary.maximum_temperature ?? null),
         peak_current_a: currentPeaks.length ? Math.max(...currentPeaks) : null,

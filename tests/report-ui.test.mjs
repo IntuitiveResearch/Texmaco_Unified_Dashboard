@@ -256,5 +256,30 @@ test('CNC and Robo Welder PDFs render proper headers, equipment branding, and cy
     assert.ok(textRobo.includes('ROBOTIC WELDER HEALTH ADVISORY'));
     assert.ok(textRobo.includes('Robot welder'));
     assert.ok(!textRobo.includes('CLOOS'));
+    assert.ok(!textRobo.includes('ROBO01'));
   });
 });
+
+test('PDF report correctly reflects selected date range in KPI tiles and trend charts', async () => {
+  await compiledModule('src/modules/management/reportPdf.ts', async ({ createCompressorReportPdf }) => {
+    const customPayload = {
+      ...result(),
+      context: {
+        ...result().context,
+        start_date: '2026-10-16',
+        end_date: '2026-10-22',
+        coverage: { requested_days: 7, available_days: 7, missing_dates: [], missing_dates_by_series: {} },
+        trends: ['2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22'].map(date => ({
+          date, availability_pct: 85, runtime_hours: 14, downtime_hours: 2,
+        })),
+        kpis: { availability_pct: 85.0, cycle_count: 50, utilization_pct: 68.0, downtime_seconds: 7200 },
+      },
+    };
+    const doc = await createCompressorReportPdf(customPayload);
+    const text = doc.output();
+    assert.ok(text.includes('(7-DAY)'));
+    assert.ok(text.includes('Selected period'));
+    assert.ok(text.includes('2026-10-16 to 2026-10-22'));
+  });
+});
+

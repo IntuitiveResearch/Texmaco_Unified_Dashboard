@@ -19,17 +19,30 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
       let text = '';
       for await (const chunk of req) {
         text += chunk.toString();
-        if (Buffer.byteLength(text) > 4096) throw new ReportError('Request is too large.', 413);
+        if (Buffer.byteLength(text) > 65536) throw new ReportError('Request is too large.', 413);
       }
       body = text;
     }
     if (typeof body === 'string') {
-      if (Buffer.byteLength(body) > 4096) throw new ReportError('Request is too large.', 413);
+      if (Buffer.byteLength(body) > 65536) throw new ReportError('Request is too large.', 413);
       try { body = JSON.parse(body); } catch { throw new ReportError('Invalid JSON request.', 400); }
     }
     const targetAsset = (body as any)?.compressor || (body as any)?.asset;
     if (!targetAsset || typeof targetAsset !== 'string') throw new ReportError('A compressor or asset ID is required.', 400);
-    const result = await generateReportOnce(targetAsset);
+
+    const startDate = (body as any)?.start_date || (body as any)?.startDate;
+    const endDate = (body as any)?.end_date || (body as any)?.endDate;
+    const datePreset = (body as any)?.date_preset || (body as any)?.datePreset;
+    const availability = typeof (body as any)?.availability === 'number' ? (body as any).availability : undefined;
+    const utilization = typeof (body as any)?.utilization === 'number' ? (body as any).utilization : undefined;
+
+    const result = await generateReportOnce(targetAsset, {
+      startDate,
+      endDate,
+      datePreset,
+      availability,
+      utilization,
+    });
     if (!res.destroyed) { res.statusCode = 200; res.end(JSON.stringify(result)); }
   } catch (error) {
     if (!res.destroyed) {

@@ -24,13 +24,13 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
   const findings = getClientReportFindings(report);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const margin = 10, width = 210, contentWidth = 190;
-  const asset = context.asset.id.replace('#', '');
+  const isCnc = context.asset.id.includes('CNC') || context.asset.device_type === 'cnc_cutter';
+  const isRobo = context.asset.id.includes('ROBO') || context.asset.device_type === 'welding_robot' || context.asset.id.toLowerCase().includes('welder');
+  const asset = isRobo ? 'Robot welder' : context.asset.id.replace('#', '');
   const equipment = context.asset.equipment;
-  const isCnc = asset.includes('CNC') || context.asset.device_type === 'cnc_cutter';
-  const isRobo = asset.includes('ROBO') || context.asset.device_type === 'welding_robot';
   const serialNumber = asset === 'CMP01' ? COMPRESSOR_1_SERIAL_NUMBER : asset === 'CMP02' ? COMPRESSOR_2_SERIAL_NUMBER : equipment?.serial_number;
   const date = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(context.generated_at));
-  doc.setProperties({ title: `${asset} Root Cause Analysis & Prescriptive Report`, subject: `${isCnc ? 'CNC Cutter' : isRobo ? 'Robotic Welder' : 'Compressor'} condition monitoring advisory`, author: 'IntuitiveIntelligence' });
+  doc.setProperties({ title: `${isRobo ? 'Robot welder' : asset} Root Cause Analysis & Prescriptive Report`, subject: `${isCnc ? 'CNC Cutter' : isRobo ? 'Robotic Welder' : 'Compressor'} condition monitoring advisory`, author: 'IntuitiveIntelligence' });
   let y = 22;
   doc.setFillColor(...navy); doc.rect(margin, y, contentWidth, 25, 'F');
   doc.setTextColor(255, 255, 255); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
@@ -57,18 +57,22 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
     measured(value) ? [{ value: `${value.toFixed(digits)}${suffix}`, label, color }] : [];
   const kpi = context.kpis;
   const todayAvailable = measured(kpi.today_availability_pct);
+  const totalDays = context.coverage?.requested_days ?? context.trends?.length ?? 30;
+  const periodLabel = totalDays === 1 ? 'SELECTED DATE' : `${totalDays}-DAY`;
+  const periodRangeText = totalDays === 1 ? 'SELECTED DATE' : `LAST ${totalDays} DAYS`;
+
   const cells: KpiCell[] = isCnc || isRobo ? [
-    ...metric(todayAvailable ? kpi.today_availability_pct : kpi.availability_pct, todayAvailable ? "TODAY'S\nAVAILABILITY" : '30-DAY\nAVAILABILITY', 1, '%'),
-    ...metric(kpi.cycle_count, 'TOTAL CYCLES\nLAST 30 DAYS', 0, '', ink),
-    ...metric(kpi.utilization_pct, 'AVG UTILIZATION\nLAST 30 DAYS', 1, '%', blue),
+    ...metric(todayAvailable ? kpi.today_availability_pct : kpi.availability_pct, todayAvailable ? "TODAY'S\nAVAILABILITY" : `${periodLabel}\nAVAILABILITY`, 1, '%'),
+    ...metric(kpi.cycle_count, `TOTAL CYCLES\n${periodRangeText}`, 0, '', ink),
+    ...metric(kpi.utilization_pct, `AVG UTILIZATION\n${periodRangeText}`, 1, '%', blue),
     ...metric(measured(kpi.downtime_seconds) ? kpi.downtime_seconds / 3600 : undefined, 'DOWNTIME\nHOURS', 1, ' h', red),
     ...(report.severity !== 'Unknown' ? [{ value: report.severity.toUpperCase(), label: ['High', 'Critical'].includes(report.severity) ? 'PRIORITY\nREVIEW REQUIRED' : 'ADVISORY\nSEVERITY', color: concernColor(report.severity), severity: true }] : []),
   ] : [
-    ...metric(todayAvailable ? kpi.today_availability_pct : kpi.availability_pct, todayAvailable ? "TODAY'S\nAVAILABILITY" : '30-DAY\nAVAILABILITY', 1, '%'),
+    ...metric(todayAvailable ? kpi.today_availability_pct : kpi.availability_pct, todayAvailable ? "TODAY'S\nAVAILABILITY" : `${periodLabel}\nAVAILABILITY`, 1, '%'),
     ...metric(kpi.today_interruptions, 'INTERRUPTIONS\nTODAY', 0, '', red),
-    ...metric(kpi.interruptions, 'INTERRUPTIONS\nLAST 30 DAYS', 0, '', ink),
-    ...metric(kpi.peak_current_a, 'PEAK CURRENT\nLAST 30 DAYS', 1, ' A'),
-    ...metric(kpi.maximum_temperature_c, 'MAX OBSERVED TEMP\nLAST 30 DAYS', 1, '°C'),
+    ...metric(kpi.interruptions, `INTERRUPTIONS\n${periodRangeText}`, 0, '', ink),
+    ...metric(kpi.peak_current_a, `PEAK CURRENT\n${periodRangeText}`, 1, ' A'),
+    ...metric(kpi.maximum_temperature_c, `MAX OBSERVED TEMP\n${periodRangeText}`, 1, '°C'),
     ...(report.severity !== 'Unknown' ? [{ value: report.severity.toUpperCase(), label: ['High', 'Critical'].includes(report.severity) ? 'PRIORITY\nREVIEW REQUIRED' : 'ADVISORY\nSEVERITY', color: concernColor(report.severity), severity: true }] : []),
   ];
   const cellWidth = contentWidth / Math.max(1, cells.length);
@@ -158,5 +162,7 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
 
 export async function downloadCompressorReport(result: ReportResponse) {
   const doc = await createCompressorReportPdf(result);
-  doc.save(`${result.context.asset.id.replace('#', '')}_Health_Report_${result.context.snapshot_date}.pdf`);
+  const isRobo = result.context.asset.id.includes('ROBO') || result.context.asset.device_type === 'welding_robot' || result.context.asset.id.toLowerCase().includes('welder');
+  const filePrefix = isRobo ? 'Robot_welder' : result.context.asset.id.replace('#', '');
+  doc.save(`${filePrefix}_Health_Report_${result.context.snapshot_date}.pdf`);
 }

@@ -2,13 +2,31 @@ import type { ReportResponse } from './reportTypes';
 
 const inFlight = new Map<string, Promise<ReportResponse>>();
 
-export function requestCompressorReport(compressor: string): Promise<ReportResponse> {
-  const existing = inFlight.get(compressor);
+export interface RequestReportOptions {
+  startDate?: string;
+  endDate?: string;
+  datePreset?: string;
+  availability?: number | null;
+  utilization?: number | null;
+}
+
+export function requestCompressorReport(compressor: string, options: RequestReportOptions = {}): Promise<ReportResponse> {
+  const cacheKey = `${compressor}_${options.startDate || ''}_${options.endDate || ''}`;
+  const existing = inFlight.get(cacheKey);
   if (existing) return existing;
   const request = (async () => {
     const response = await fetch('/api/analyze-report', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ compressor }), signal: AbortSignal.timeout(140000),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        compressor,
+        start_date: options.startDate,
+        end_date: options.endDate,
+        date_preset: options.datePreset,
+        availability: options.availability,
+        utilization: options.utilization,
+      }),
+      signal: AbortSignal.timeout(140000),
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || `Report request failed (HTTP ${response.status}).`);
@@ -21,7 +39,7 @@ export function requestCompressorReport(compressor: string): Promise<ReportRespo
       (compressor === 'ROBO#01' && assetId === 'ROBO#01');
     if (!body.report || !body.context || !matchesAsset) throw new Error('The report response is invalid.');
     return body as ReportResponse;
-  })().finally(() => inFlight.delete(compressor));
-  inFlight.set(compressor, request);
+  })().finally(() => inFlight.delete(cacheKey));
+  inFlight.set(cacheKey, request);
   return request;
 }

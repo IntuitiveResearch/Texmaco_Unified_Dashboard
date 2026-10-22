@@ -24,27 +24,32 @@ export function drawReportTrends(doc: jsPDF, rows: ReportResponse['context']['tr
     }
     doc.setLineDashPattern([], 0);
     const step = (right - left) / Math.max(1, rows.length);
+    const skipLabel = rows.length > 20 ? 5 : rows.length > 12 ? 2 : 1;
     rows.forEach((row, i) => {
       const cx = left + (i + 0.5) * step;
       const values = chart === 0 ? [row.availability_pct] : [row.runtime_hours, row.downtime_hours];
       values.forEach((value, index) => {
-        const barWidth = step * (chart === 0 ? 0.57 : 0.3);
-        const bx = chart === 0 ? cx - barWidth / 2 : cx + (index === 0 ? -barWidth - 0.3 : 0.3);
+        const barWidth = Math.min(step * (chart === 0 ? 0.65 : 0.32), chart === 0 ? 8 : 4);
+        const bx = chart === 0 ? cx - barWidth / 2 : cx + (index === 0 ? -barWidth - 0.2 : 0.2);
         if (!valid(value)) {
-          doc.setTextColor(100, 116, 139); doc.setFontSize(4.5);
-          doc.text('N/A', bx + barWidth / 2, bottom - 1, { align: 'center' });
+          if (rows.length <= 14) {
+            doc.setTextColor(100, 116, 139); doc.setFontSize(rows.length > 8 ? 3.5 : 4.5);
+            doc.text('N/A', bx + barWidth / 2, bottom - 1, { align: 'center' });
+          }
           return;
         }
         const barHeight = (value! / max) * (bottom - top);
         doc.setFillColor(...(index === 0 ? [22, 163, 74] : [220, 38, 38]) as [number, number, number]);
         if (barHeight > 0) doc.rect(bx, bottom - barHeight, barWidth, barHeight, 'F');
-        if (chart === 0) {
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.6); doc.setTextColor(51, 65, 85);
+        if (chart === 0 && rows.length <= 12) {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(rows.length > 7 ? 4.8 : 5.6); doc.setTextColor(51, 65, 85);
           doc.text(`${Math.round(value!)}%`, cx, bottom - barHeight - 1.5, { align: 'center' });
         }
       });
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(5.4); doc.setTextColor(100, 116, 139);
-      doc.text(label(row.date), cx, bottom + 3.5, { align: 'center' });
+      if (i % skipLabel === 0 || i === rows.length - 1) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(rows.length > 14 ? 4.5 : 5.4); doc.setTextColor(100, 116, 139);
+        doc.text(label(row.date), cx, bottom + 3.5, { align: 'center' });
+      }
     });
     if (chart === 0) {
       const available = rows.map(row => row.availability_pct).filter(valid) as number[];
@@ -62,7 +67,9 @@ export function drawReportTrends(doc: jsPDF, rows: ReportResponse['context']['tr
     }
   }
   doc.setFontSize(6.3); doc.setTextColor(100, 116, 139);
-  const caption = rows.length ? `Last 7 completed days: ${rows[0].date} to ${rows[rows.length - 1].date}. Gaps = unavailable; offline time is separate from downtime.` : 'Historical trend data unavailable.';
+  const caption = rows.length
+    ? `Selected period (${rows.length} ${rows.length === 1 ? 'day' : 'days'}): ${rows[0].date} to ${rows[rows.length - 1].date}. Gaps = unavailable; offline time is separate from downtime.`
+    : 'Historical trend data unavailable.';
   doc.text(caption, 10, y + h + 4);
   return y + h + 8;
 }

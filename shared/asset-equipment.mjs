@@ -19,9 +19,11 @@ export const ASSET_MAP = {
   'CNC#01': { id: 'CNC#01', deviceType: 'cnc_cutter', apiId: CNC_API_PK, label: 'CNC Cutter 1' },
   'CNC01': { id: 'CNC#01', deviceType: 'cnc_cutter', apiId: CNC_API_PK, label: 'CNC Cutter 1' },
   [CNC_API_PK]: { id: 'CNC#01', deviceType: 'cnc_cutter', apiId: CNC_API_PK, label: 'CNC Cutter 1' },
-  'ROBO#01': { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo Welder 1' },
-  'ROBO01': { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo Welder 1' },
-  [ROBO_API_PK]: { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo Welder 1' },
+  'ROBO#01': { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo welder' },
+  'ROBO01': { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo welder' },
+  'Robo welder': { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo welder' },
+  'Robo Welder': { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo welder' },
+  [ROBO_API_PK]: { id: 'ROBO#01', deviceType: 'welding_robot', apiId: ROBO_API_PK, label: 'Robo welder' },
 };
 
 export function canonicalAssetId(input) {
@@ -31,7 +33,7 @@ export function canonicalAssetId(input) {
   const upper = trimmed.toUpperCase();
   if (ASSET_MAP[upper]) return ASSET_MAP[upper].id;
   if (upper.includes('TXMCNCI') || upper.includes('CNC')) return 'CNC#01';
-  if (upper.includes('TXMMIGI') || upper.includes('ROBO')) return 'ROBO#01';
+  if (upper.includes('TXMMIGI') || upper.includes('ROBO') || upper.includes('WELDER')) return 'ROBO#01';
   if (upper.includes('CMP01') || upper === 'CMP#01' || upper === '01') return 'CMP#01';
   if (upper.includes('CMP02') || upper === 'CMP#02' || upper === '02') return 'CMP#02';
   return null;
