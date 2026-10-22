@@ -14,6 +14,7 @@ import {
   clearFinancialIntelCache,
   fetchFinancialIntel,
   mapFinancialIntelToDashboardData,
+  mapInputAssumptionsToState,
   saveFinancialAssumptions,
   SaveAssumptionsResponse,
 } from './services/api';
@@ -49,6 +50,9 @@ export default function App() {
         const response = await fetchFinancialIntel(asset.asset, range, forceRefresh);
         const mapped = mapFinancialIntelToDashboardData(response, asset.name);
         setDashboardData(mapped);
+        if (response.input_assumptions) {
+          setAssumptions(mapInputAssumptionsToState(response.input_assumptions));
+        }
         const now = new Date();
         setLastUpdated(
           now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) +

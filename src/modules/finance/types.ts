@@ -65,6 +65,7 @@ export interface PlantData {
   trendData: MonthlyTrendData[];
   savingOpportunities: SavingOpportunity[];
   keyTakeaway?: FinancialIntelKeyTakeaway;
+  inputAssumptions?: FinancialIntelInputAssumptions;
 }
 
 export interface FinancialIntelKeyTakeaway {
@@ -139,9 +140,22 @@ export interface FinancialIntelTrend {
   total_exposure: number;
 }
 
+export interface FinancialIntelInputAssumptions {
+  downtime_cost_per_hour?: number;
+  maintenance_event_count?: number;
+  average_production_value?: number;
+  average_spares_labour_cost?: number;
+  average_maintenance_cost?: number;
+  electricity_tariff?: number;
+  operating_hours?: number;
+  asset_operating_hours?: number;
+  [key: string]: any;
+}
+
 export interface FinancialIntelResponse {
   asset: string;
   asset_type: string;
+  input_assumptions?: FinancialIntelInputAssumptions;
   period: FinancialIntelPeriod;
   operational: FinancialIntelOperational;
   financial_exposure: FinancialIntelExposure;

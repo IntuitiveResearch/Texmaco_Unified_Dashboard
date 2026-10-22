@@ -1,11 +1,14 @@
 import {
   CostCategory,
+  FinancialAssumption,
+  FinancialIntelInputAssumptions,
   FinancialIntelResponse,
   KpiMetric,
   MonthlyTrendData,
   PlantData,
   SavingOpportunity,
 } from '../types';
+import { INITIAL_ASSUMPTIONS } from '../mockData';
 
 export interface SaveAssumptionsPayload {
   asset: string;
@@ -416,6 +419,7 @@ export function mapFinancialIntelToDashboardData(
     trendData,
     savingOpportunities,
     keyTakeaway: data.key_takeaway,
+    inputAssumptions: data.input_assumptions,
   };
 }
 
@@ -440,6 +444,59 @@ export function buildPayloadFromAssumptions(
     average_spares_labour_cost: findValue('spares_cost', 20000),
     average_production_value: findValue('production_value', 50000),
   };
+}
+
+export function mapInputAssumptionsToState(
+  apiAssumptions?: FinancialIntelInputAssumptions | null,
+  baseline: FinancialAssumption[] = INITIAL_ASSUMPTIONS
+): FinancialAssumption[] {
+  if (!apiAssumptions || typeof apiAssumptions !== 'object') {
+    return baseline;
+  }
+
+  return baseline.map((item) => {
+    let rawNumber = item.rawNumber;
+
+    if (item.id === 'tariff' && typeof apiAssumptions.electricity_tariff === 'number') {
+      rawNumber = apiAssumptions.electricity_tariff;
+    } else if (item.id === 'production_value' && typeof apiAssumptions.average_production_value === 'number') {
+      rawNumber = apiAssumptions.average_production_value;
+    } else if (item.id === 'downtime_cost' && typeof apiAssumptions.downtime_cost_per_hour === 'number') {
+      rawNumber = apiAssumptions.downtime_cost_per_hour;
+    } else if (item.id === 'maint_event_cost' && typeof apiAssumptions.average_maintenance_cost === 'number') {
+      rawNumber = apiAssumptions.average_maintenance_cost;
+    } else if (item.id === 'spares_cost' && typeof apiAssumptions.average_spares_labour_cost === 'number') {
+      rawNumber = apiAssumptions.average_spares_labour_cost;
+    } else if (item.id === 'maint_events' && typeof apiAssumptions.maintenance_event_count === 'number') {
+      rawNumber = apiAssumptions.maintenance_event_count;
+    } else if (
+      item.id === 'operating_hours' &&
+      (typeof apiAssumptions.operating_hours === 'number' || typeof apiAssumptions.asset_operating_hours === 'number')
+    ) {
+      rawNumber = (apiAssumptions.operating_hours ?? apiAssumptions.asset_operating_hours)!;
+    }
+
+    let value = '';
+    if (item.unit.includes('kWh')) {
+      value = `₹ ${rawNumber} / kWh`;
+    } else if (item.unit.includes('hour') && !item.unit.includes('hours / month')) {
+      value = `₹ ${Number(rawNumber).toLocaleString('en-IN')} / hour`;
+    } else if (item.unit.includes('event')) {
+      value = `₹ ${Number(rawNumber).toLocaleString('en-IN')} / event`;
+    } else if (item.unit.includes('hours / month')) {
+      value = `${rawNumber} hours / month`;
+    } else if (item.unit.includes('/ month')) {
+      value = `${rawNumber} / month`;
+    } else {
+      value = `${rawNumber}`;
+    }
+
+    return {
+      ...item,
+      rawNumber,
+      value,
+    };
+  });
 }
 
 export async function saveFinancialAssumptions(

@@ -13,6 +13,8 @@ import { CraneDashboardView } from './modules/crane/CraneDashboardView';
 import { CRANE_ASSET_STATUS } from './modules/crane/craneStatus';
 import { MigOmDashboardView } from './modules/om/MigOmDashboardView';
 import { MIG_ASSET_ID } from './modules/om/data/migSample';
+import { fetchFinancialIntel } from './modules/finance/services/api';
+import { ASSET_OPTIONS } from './modules/finance/mockData';
 
 const ReportsPlaceholderView: React.FC = () => (
   <div className="flex-1 w-full p-4 lg:p-6 flex items-center justify-center">
@@ -147,6 +149,20 @@ export default function App() {
       localStorage.setItem('texmaco_selected_asset', selectedAsset);
     }
   }, [selectedAsset]);
+
+  // Preload financial intel in the background so the dashboard is already updated when viewed
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    const targetAsset =
+      ASSET_OPTIONS.find((a) => a.name === selectedAsset || a.asset === selectedAsset) ||
+      (selectedAsset === 'CNC#01' || selectedAsset.includes('CNC') ? ASSET_OPTIONS[2] : null) ||
+      (selectedAsset === 'CMP#02' ? ASSET_OPTIONS[1] : null) ||
+      ASSET_OPTIONS[0];
+
+    if (targetAsset) {
+      void fetchFinancialIntel(targetAsset.asset, financeDatePreset);
+    }
+  }, [isAuthenticated, selectedAsset, financeDatePreset]);
 
   // Module Refs for imperative refresh
   const omRef = useRef<OmDashboardRef>(null);

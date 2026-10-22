@@ -13,6 +13,7 @@ import {
   fetchFinancialIntel,
   getCachedIntel,
   mapFinancialIntelToDashboardData,
+  mapInputAssumptionsToState,
   saveFinancialAssumptions,
   SaveAssumptionsResponse,
 } from './services/api';
@@ -37,16 +38,35 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
       ASSET_OPTIONS[0];
 
     const [selectedAsset, setSelectedAsset] = useState<AssetOption>(matchedAsset);
-    const [assumptions, setAssumptions] = useState<FinancialAssumption[]>(INITIAL_ASSUMPTIONS);
-    const [dashboardData, setDashboardData] = useState<PlantData | null>(null);
+    const [assumptions, setAssumptions] = useState<FinancialAssumption[]>(() => {
+      const cached = getCachedIntel(matchedAsset.asset, timeRange);
+      if (cached?.input_assumptions) {
+        return mapInputAssumptionsToState(cached.input_assumptions);
+      }
+      return INITIAL_ASSUMPTIONS;
+    });
+    const [dashboardData, setDashboardData] = useState<PlantData | null>(() => {
+      const cached = getCachedIntel(matchedAsset.asset, timeRange);
+      return cached ? mapFinancialIntelToDashboardData(cached, matchedAsset.name) : null;
+    });
     const [notification, setNotification] = useState<string | null>(null);
-    const [isLoadingIntel, setIsLoadingIntel] = useState(false);
+    const [isLoadingIntel, setIsLoadingIntel] = useState<boolean>(() => {
+      const cached = getCachedIntel(matchedAsset.asset, timeRange);
+      return !cached;
+    });
     const [intelError, setIntelError] = useState<string | null>(null);
 
-    // Sync selectedAsset when prop changes
+    // Sync selectedAsset when prop changes and apply cached values immediately
     useEffect(() => {
       setSelectedAsset(matchedAsset);
-    }, [matchedAsset]);
+      const cached = getCachedIntel(matchedAsset.asset, timeRange);
+      if (cached) {
+        setDashboardData(mapFinancialIntelToDashboardData(cached, matchedAsset.name));
+        if (cached.input_assumptions) {
+          setAssumptions(mapInputAssumptionsToState(cached.input_assumptions));
+        }
+      }
+    }, [matchedAsset, timeRange]);
 
     const defaultPlantData = PLANTS_DATA['Kharagpur'] || PLANTS_DATA['Belgharia'] || Object.values(PLANTS_DATA)[0];
     const activePlantData = dashboardData || defaultPlantData;
@@ -58,32 +78,39 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
 
     const loadFinancialIntel = useCallback(
       async (asset: AssetOption, range: string, forceRefresh = false) => {
-        // Fast switch: check cache immediately without spinner or lag
-        if (!forceRefresh) {
-          const cached = getCachedIntel(asset.asset, range);
-          if (cached) {
-            const mapped = mapFinancialIntelToDashboardData(cached, asset.name);
-            setDashboardData(mapped);
-            setIntelError(null);
-            setIsLoadingIntel(false);
-            if (onRefreshingChange) onRefreshingChange(false);
-            return;
+        const cached = getCachedIntel(asset.asset, range);
+
+        // 1. If cached data is available, populate it immediately so there's zero UI latency
+        if (cached) {
+          const mapped = mapFinancialIntelToDashboardData(cached, asset.name);
+          setDashboardData(mapped);
+          if (cached.input_assumptions) {
+            setAssumptions(mapInputAssumptionsToState(cached.input_assumptions));
           }
+          setIntelError(null);
+          setIsLoadingIntel(false);
+        } else {
+          setIsLoadingIntel(true);
         }
 
-        setIsLoadingIntel(true);
-        setIntelError(null);
         if (onRefreshingChange) onRefreshingChange(true);
 
+        // 2. Always fetch fresh data from API to ensure the dashboard and input assumptions are fully updated
         try {
-          const response = await fetchFinancialIntel(asset.asset, range, forceRefresh);
+          const response = await fetchFinancialIntel(asset.asset, range, forceRefresh || !cached);
           const mapped = mapFinancialIntelToDashboardData(response, asset.name);
           setDashboardData(mapped);
+          if (response.input_assumptions) {
+            setAssumptions(mapInputAssumptionsToState(response.input_assumptions));
+          }
+          setIntelError(null);
         } catch (err: any) {
           console.error('Error fetching financial intel:', err);
           const msg = err.message || 'Unable to retrieve insights from API.';
           setIntelError(msg);
-          showNotification(`Notice: ${msg}`);
+          if (!cached) {
+            showNotification(`Notice: ${msg}`);
+          }
         } finally {
           setIsLoadingIntel(false);
           if (onRefreshingChange) onRefreshingChange(false);
@@ -108,8 +135,13 @@ export const FinanceDashboardView = forwardRef<FinanceDashboardRef, FinanceDashb
     };
 
     const handleResetAssumptions = () => {
-      setAssumptions(INITIAL_ASSUMPTIONS);
-      showNotification('Financial assumptions reset to baseline.');
+      if (dashboardData?.inputAssumptions) {
+        setAssumptions(mapInputAssumptionsToState(dashboardData.inputAssumptions));
+        showNotification('Financial assumptions reset to API values.');
+      } else {
+        setAssumptions(INITIAL_ASSUMPTIONS);
+        showNotification('Financial assumptions reset to baseline.');
+      }
     };
 
     const handleSaveAssumptionsToApi = async (
