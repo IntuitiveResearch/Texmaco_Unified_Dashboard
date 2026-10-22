@@ -187,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
     id: selectedAsset,
     name: selectedAsset,
     plant: 'Texmaco - Agarpara',
-    status: 'Unknown',
+    status: 'Offline',
   };
 
   return (

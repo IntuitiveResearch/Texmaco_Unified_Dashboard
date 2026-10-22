@@ -388,8 +388,8 @@ export default function App() {
     cycle_count: filterByVisualDates(rawGraphs.cycle_count, visualDateSet),
   };
   const summary = createVisualSummary(rawSummary, rawGraphs, isCncOrRobo, visualDateSet);
-  const managementAlerts = isCncOrRobo ? [] : getManagementAlerts(summary, graphs.thermal_rates);
   const avgUtilization = getAverageUtilization(summary, graphs, isCncOrRobo, visualDateSet);
+  const managementAlerts = getManagementAlerts(summary, graphs.thermal_rates, isCncOrRobo, avgUtilization);
   const visualDayCount = Math.max(visualDateSet.size, graphs.runtime_distribution.length);
   const dashboardTitle = isRoboAsset ? 'Robotic Welder Dashboard' : isCncAsset ? 'Duce Pack Cutter Dashboard' : 'Compressor Management Dashboard';
 
@@ -740,7 +740,7 @@ export default function App() {
           >
             <WorstDowntimeDaysChart data={graphs.runtime_distribution} />
           </ChartCard>
-          <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCnc={isCncOrRobo} />
+          <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCncOrRobo={isCncOrRobo} avgUtilization={avgUtilization} />
           {!isCncOrRobo && (
             <ChartCard
               title={`Time Breakdown (${visualDayCount} Day${visualDayCount === 1 ? '' : 's'})`}

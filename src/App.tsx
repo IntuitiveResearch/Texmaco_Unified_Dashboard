@@ -191,6 +191,7 @@ export default function App() {
       omRef.current.refresh();
     } else if (currentTab === 'management' && managementRef.current) {
       managementRef.current.refresh();
+      void refreshStatuses();
     } else if (currentTab === 'finance' && financeRef.current) {
       financeRef.current.refresh();
     }
@@ -289,6 +290,7 @@ export default function App() {
             <OmDashboardView
               ref={omRef}
               selectedAsset={selectedAsset}
+              assetStatuses={assetStatuses}
               rangePreset={(omDatePreset as any) || '30days'}
               onRefreshingChange={setIsRefreshing}
               onRunStateChange={reportRunState}
@@ -299,6 +301,7 @@ export default function App() {
             <ManagementDashboardView
               ref={managementRef}
               selectedAsset={selectedAsset}
+              assetStatuses={assetStatuses}
               datePreset={mgmtDatePreset}
               customStartDate={customStartDate}
               customEndDate={customEndDate}

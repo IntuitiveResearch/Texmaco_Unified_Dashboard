@@ -1,8 +1,9 @@
 // Shared display/report metadata. Ratings are transcribed from the supplied nameplate.
 // The user asked us to assume that both compressors have the same specification;
-// Compressor 1 retains its configured serial number at the user's explicit request.
+// Each compressor retains its user-provided configured identifier.
 export const COMPRESSOR_MODEL = 'G 160 V2';
 export const COMPRESSOR_1_SERIAL_NUMBER = 'PNB960437';
+export const COMPRESSOR_2_SERIAL_NUMBER = 'PNB960273';
 
 export function getCompressorEquipment(asset) {
   if (!['CMP#01', 'CMP#02'].includes(asset)) throw new Error('No equipment profile is configured for this asset.');
@@ -18,7 +19,7 @@ export function getCompressorEquipment(asset) {
       motor_rating_kw: 160,
     },
     // Serial number and manufacture year identify an individual machine, not a model.
-    serial_number: asset === 'CMP#01' ? COMPRESSOR_1_SERIAL_NUMBER : null,
+    serial_number: asset === 'CMP#01' ? COMPRESSOR_1_SERIAL_NUMBER : COMPRESSOR_2_SERIAL_NUMBER,
     manufacture_year: null,
     drive_type: null,
     cooling_type: null,

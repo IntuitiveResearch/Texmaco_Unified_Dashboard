@@ -63,13 +63,13 @@ test('both compressors receive assumed matching nameplate ratings without invent
   assert.equal(second.asset.equipment.model, equipment.model);
   assert.deepEqual(second.asset.equipment.nameplate_ratings, equipment.nameplate_ratings);
   assert.equal(equipment.serial_number, 'PNB960437');
-  assert.equal(second.asset.equipment.serial_number, null);
+  assert.equal(second.asset.equipment.serial_number, 'PNB960273');
   assert.equal(equipment.model, 'G 160 V2');
   assert.equal(equipment.assignment_status, 'assumed_same_specifications');
   assert.deepEqual(equipment.nameplate_ratings, { maximum_final_pressure_bar_e: 8.5, rated_free_air_delivery_l_per_s: 478, rated_free_air_delivery_m3_per_min: 28.68, motor_rating_kw: 160 });
   for (const field of ['manufacture_year', 'drive_type', 'cooling_type', 'rated_motor_current_a', 'temperature_limits_c', 'vibration_limits', 'sensor_locations', 'manual_reference']) assert.equal(equipment[field], null);
   assert.ok(!first.data_quality.limitations.some(text => text.includes('serial number is unassigned')));
-  assert.ok(second.data_quality.limitations.some(text => text.includes('serial number is unassigned')));
+  assert.ok(!second.data_quality.limitations.some(text => text.includes('serial number is unassigned')));
   assert.ok(first.data_quality.limitations.some(text => text.includes('assumed to match both')));
   assert.notStrictEqual(equipment, second.asset.equipment);
 });

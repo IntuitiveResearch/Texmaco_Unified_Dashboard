@@ -3,7 +3,7 @@ import autoTable, { type CellInput, type UserOptions } from 'jspdf-autotable';
 import type { ReportResponse } from './reportTypes';
 import { drawReportTrends } from './reportCharts';
 import { getClientReportFindings } from './reportPresentation';
-import { COMPRESSOR_1_SERIAL_NUMBER } from '../../../shared/compressor-equipment.mjs';
+import { COMPRESSOR_1_SERIAL_NUMBER, COMPRESSOR_2_SERIAL_NUMBER } from '../../../shared/compressor-equipment.mjs';
 
 type Color = [number, number, number];
 const navy: Color = [15, 23, 42];
@@ -26,7 +26,7 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
   const margin = 10, width = 210, contentWidth = 190;
   const asset = context.asset.id.replace('#', '');
   const equipment = context.asset.equipment;
-  const serialNumber = equipment?.serial_number ?? (asset === 'CMP01' ? COMPRESSOR_1_SERIAL_NUMBER : null);
+  const serialNumber = asset === 'CMP01' ? COMPRESSOR_1_SERIAL_NUMBER : asset === 'CMP02' ? COMPRESSOR_2_SERIAL_NUMBER : equipment?.serial_number;
   const date = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(context.generated_at));
   doc.setProperties({ title: `${asset} Root Cause Analysis & Prescriptive Report`, subject: 'Compressor condition monitoring advisory', author: 'IntuitiveIntelligence' });
   let y = 22;

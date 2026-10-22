@@ -12,8 +12,8 @@ function getRoboLatestCurrent(data: any): number {
   const series = data.current_time_series;
   if (Array.isArray(series) && series.length > 0) {
     const last = series[series.length - 1];
-    if (typeof last?.peak_current_a === 'number') return last.peak_current_a;
-    if (typeof last?.rms_a === 'number') return last.rms_a;
+    if (typeof last?.peak_current_a === 'number' && Number.isFinite(last.peak_current_a)) return last.peak_current_a;
+    if (typeof last?.rms_a === 'number' && Number.isFinite(last.rms_a)) return last.rms_a;
   }
   return 0;
 }

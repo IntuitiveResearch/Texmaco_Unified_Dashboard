@@ -73,3 +73,26 @@ test('old cached false-stopped values are ignored and newly derived current stat
     if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;
   }
 });
+
+test('missing, nonfinite, and alternate current fields use the shared Online/Offline rule', async () => {
+  const { fetchOperationalKpi } = await loadKpiService();
+  const originalFetch = globalThis.fetch;
+  let payload;
+  globalThis.fetch = async () => ({ ok: true, json: async () => payload });
+  try {
+    const cases = [
+      { latest: {}, expectedCurrent: 0, expectedStatus: 'Offline' },
+      { latest: { current: { rms_a: Number.NaN } }, expectedCurrent: 0, expectedStatus: 'Offline' },
+      { latest: { current: { current: 8.25 } }, expectedCurrent: 8.25, expectedStatus: 'Online' },
+      { latest: { current: { peak_current_a: 12.5 } }, expectedCurrent: 12.5, expectedStatus: 'Online' },
+    ];
+    for (const scenario of cases) {
+      payload = { compressor: 'CNC#01', latest: scenario.latest, kpis: {}, records_found: 1 };
+      const result = await fetchOperationalKpi('CNC#01', '2026-10-05', '2026-10-05', 'today', true);
+      assert.equal(result.latest.current.rms_a, scenario.expectedCurrent);
+      assert.equal(getOperatingStatus(result.latest.current.run_state, result.latest.current.load_state, 'CNC#01'), scenario.expectedStatus);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

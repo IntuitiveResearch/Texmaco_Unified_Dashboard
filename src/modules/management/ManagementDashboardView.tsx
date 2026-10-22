@@ -28,6 +28,7 @@ import cmp02Img from './assets/CMP02.jpeg';
 import cnc01Img from './assets/CNC01.jpeg';
 import robo01Img from '../../assets/weldwise-robotic-cell.jpg';
 import { MachineHeaderCard } from '../om/components/MachineHeaderCard';
+import type { AssetStatus } from '../../utils/assetStatus';
 
 import { HeatingCoolingChart } from './components/charts/HeatingCoolingChart';
 import { ReliabilityChart } from './components/charts/ReliabilityChart';
@@ -190,6 +191,7 @@ export interface ManagementDashboardRef {
 
 interface ManagementDashboardViewProps {
   selectedAsset: string;
+  assetStatuses?: Record<string, AssetStatus>;
   datePreset: string;
   customStartDate?: string;
   customEndDate?: string;
@@ -208,6 +210,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
   (
     {
       selectedAsset,
+      assetStatuses = {},
       datePreset,
       customStartDate,
       customEndDate,
@@ -344,15 +347,15 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
       return createVisualSummary(rawSummary, rawGraphs, isCncOrRobo, visualDateSet);
     }, [rawSummary, rawGraphs, isCncOrRobo, visualDateSet]);
 
-    const managementAlerts = useMemo(() => {
-      if (!graphs || !summary || isCncOrRobo) return [];
-      return getManagementAlerts(summary, graphs.thermal_rates);
-    }, [graphs, summary, isCncOrRobo]);
-
     const avgUtilization = useMemo(() => {
       if (!summary || !graphs) return 0;
       return getAverageUtilization(summary, graphs, isCncOrRobo, visualDateSet);
     }, [summary, graphs, isCncOrRobo, visualDateSet]);
+
+    const managementAlerts = useMemo(() => {
+      if (!graphs || !summary) return [];
+      return getManagementAlerts(summary, graphs.thermal_rates, isCncOrRobo, avgUtilization);
+    }, [graphs, summary, isCncOrRobo, avgUtilization]);
 
     const visualDayCount = useMemo(() => {
       if (!graphs) return 0;
@@ -559,19 +562,12 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
             <div className="xl:col-span-5 2xl:col-span-4 h-full min-h-0">
               <MachineHeaderCard
                 compressorId={compressor}
-                assetMeta={{
-                  id: compressor,
-                  name: compressor,
-                  plant: 'Texmaco - Agarpara',
-                  deviceId: compressor,
-                  type: isRoboAsset ? 'Robotic Welder' : isCncAsset ? 'CNC' : 'Compressor',
-                  status: 'Running',
-                }}
-                runState={1}
+                operatingStatus={assetStatuses[compressor] ?? 'Offline'}
                 hideAssetTag={true}
                 hideCycleId={true}
                 hideStatusIndicator={true}
                 hideStatusDot={true}
+                onImageClick={() => setShowImageModal(true)}
                 className="h-full"
               />
             </div>
@@ -651,7 +647,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
               <WorstDowntimeDaysChart data={graphs.runtime_distribution} />
             </ChartCard>
 
-            <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCnc={isCncOrRobo} />
+            <ActiveAlertsCard summary={summary} thermalRates={graphs.thermal_rates} isCncOrRobo={isCncOrRobo} avgUtilization={avgUtilization} />
 
             {!isCncOrRobo && (
               <ChartCard
@@ -689,6 +685,9 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
         {showImageModal && ASSET_IMAGE_MAP[compressor] && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${compressor} equipment image`}
             onClick={() => setShowImageModal(false)}
           >
             <div
@@ -704,6 +703,7 @@ export const ManagementDashboardView = forwardRef<ManagementDashboardRef, Manage
                 </div>
                 <button
                   type="button"
+                  aria-label="Close equipment image"
                   onClick={() => setShowImageModal(false)}
                   className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--chip)] transition-colors cursor-pointer"
                 >

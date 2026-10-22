@@ -17,6 +17,7 @@ import { AVAILABLE_ASSETS } from './data/mockData';
 import { OperationalKpiResponse, OperationalGraphDataResponse, TrendSample, DateRangePreset } from './types';
 import { getRangeDates } from './utils/dateUtils';
 import { ScreenFitContainer } from '../../components/ScreenFitContainer';
+import type { AssetStatus } from '../../utils/assetStatus';
 import {
   fetchWeldingData,
   getCachedWeldingData,
@@ -30,6 +31,7 @@ export interface OmDashboardRef {
 
 interface OmDashboardViewProps {
   selectedAsset: string;
+  assetStatuses?: Record<string, AssetStatus>;
   rangePreset: DateRangePreset;
   onRunStateChange?: (runState: number, assetId?: string, loadState?: number) => void;
   onRefreshingChange?: (isRefreshing: boolean) => void;
@@ -135,9 +137,9 @@ function buildRoboOperationalKpi(
       : null;
 
   const latestTimestamp = latestTimeSeries?.timestamp || new Date().toISOString();
-  const latestCurrent = typeof latestTimeSeries?.peak_current_a === 'number'
+  const latestCurrent = typeof latestTimeSeries?.peak_current_a === 'number' && Number.isFinite(latestTimeSeries.peak_current_a)
     ? latestTimeSeries.peak_current_a
-    : typeof (latestTimeSeries as any)?.rms_a === 'number'
+    : typeof (latestTimeSeries as any)?.rms_a === 'number' && Number.isFinite((latestTimeSeries as any).rms_a)
     ? (latestTimeSeries as any).rms_a
     : 0;
 
@@ -246,7 +248,7 @@ function buildRoboOperationalKpi(
 }
 
 export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
-  ({ selectedAsset, rangePreset, onRunStateChange, onRefreshingChange }, ref) => {
+  ({ selectedAsset, assetStatuses, rangePreset, onRunStateChange, onRefreshingChange }, ref) => {
     const [data, setData] = useState<OperationalKpiResponse | null>(null);
     const [graphData, setGraphData] = useState<OperationalGraphDataResponse | null>(null);
     const [weldingData, setWeldingData] = useState<WeldingApiResponse | null>(null);
@@ -454,6 +456,7 @@ export const OmDashboardView = forwardRef<OmDashboardRef, OmDashboardViewProps>(
                   lastUpdate={data.latest.current.timestamp}
                   runState={data.latest.current.run_state}
                   loadState={data.latest.current.load_state}
+                  operatingStatus={assetStatuses?.[selectedAsset]}
                 />
               </div>
 

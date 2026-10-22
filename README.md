@@ -35,6 +35,7 @@ Centralized plant analytics platform for **Texmaco Rail & Engineering** (Agarpar
 
 ### 2. Management Dashboard
 - **Executive Metrics**: Runtime vs. downtime breakdown, idle losses, availability trends.
+- The machine image opens a full-size dialog. CNC and Robo Welder show an Availability vs Utilization Management Attention item using the selected range's values.
 - **Robo Welder preview**: Select **Robo Welder** in the Executive Dashboard asset selector for the reference-based welding overview: six KPIs, daily running/idle/downtime, utilization and availability trends, production cycles, time breakdown, worst downtime days, and management attention. This asset view uses labeled frontend sample data and makes no welding API calls. Seven-day, thirty-day, and custom ranges (up to 366 days), chart expansion, legend toggles, equipment image expansion, notifications, and preview refresh are supported; totals are calculated from the same daily dataset used by the charts.
 - **14 Analytical Charts**: Availability & utilization curves, heating/cooling, sustained idle, worst downtime days.
 - **Intuitive AI Analysis**: 
@@ -48,7 +49,7 @@ Centralized plant analytics platform for **Texmaco Rail & Engineering** (Agarpar
 - **Robo Welder frontend preview**: Select **Financial Dashboard → Robo Welder** for the reference-based cost cards, distribution, category trends, savings priority filters, and editable assumptions. The sample monthly total is ₹22.36 lakhs; calibrated rates and consumption keep the cost calculations consistent. Period filters aggregate the sample months. Applying edits recalculates the view, and **Save** stores those assumptions in this browser only, without welding API calls. Other assets retain their existing financial views.
 
 ### 4. Executive Reports
-- Placeholder for automated shift CSV logs and financial audit exports.
+- The Reports sidebar entry is hidden. Compressor advisory reports remain available from the Executive dashboard.
 
 ### 5. WeldWise Dashboard (Frontend Preview)
 - Select **O&M Dashboard → Robo Welder** to use the WeldWise robotic welding interface. The standalone **WeldWise Dashboard** sidebar entry also opens this view. Both entry points share the Today/Yesterday selection, refresh, and notifications; the O&M asset selector lets you return to the compressor and CNC views.
@@ -148,7 +149,7 @@ The supplied compressor diagram is implemented as a small structured knowledge s
 Implementation map:
 
 - `server/report-data.mjs`: evidence-preserving API adapter and date window.
-- `shared/compressor-equipment.mjs`: shared Atlas Copco G 160 V2 display name and equipment profile. Both compressors are assumed, at the user's request, to share the photographed ratings: 160 kW motor, 8.5 bar(e) maximum final pressure, 478 l/s (28.68 m³/min) rated free-air delivery. This assumption is passed to Gemini and retained internally. Compressor 1 retains its user-confirmed configured serial number PNB960437 in the Gemini input and PDF; Compressor 2's serial number is unassigned. The photographed 2022 manufacture year is not assigned to either asset. Drive/cooling configuration, rated current, sensor locations and temperature/vibration limits remain unknown; ratings are not live measurements or diagnostic thresholds.
+- `shared/compressor-equipment.mjs`: shared Atlas Copco G 160 V2 display name and equipment profile. Both compressors are assumed, at the user's request, to share the photographed ratings: 160 kW motor, 8.5 bar(e) maximum final pressure, 478 l/s (28.68 m³/min) rated free-air delivery. This assumption is passed to Gemini and retained internally. The configured Compressor IDs are PNB960437 for Compressor 1 and PNB960273 for Compressor 2; both are used in their respective Gemini inputs and PDFs. The photographed 2022 manufacture year is not assigned to either asset. Drive/cooling configuration, rated current, sensor locations and temperature/vibration limits remain unknown; ratings are not live measurements or diagnostic thresholds.
 - `server/knowledge/compressor-rules.mjs`: conditional reference records and their component/method sources.
 - `server/compressor-knowledge.mjs`: selects records and attaches measured observations without inventing diagnostic limits.
 - `server/report-prompt.mjs`: system prompt, JSON schema and prompt version.

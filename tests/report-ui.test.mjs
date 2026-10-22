@@ -23,7 +23,7 @@ test('branded PDF retains section order, measured trend gaps, snapshot metadata 
     const output = doc.output();
     assert.equal(doc.getNumberOfPages(), 2);
     assert.ok(output.includes('COMPRESSOR HEALTH ADVISORY'));
-    assert.ok(output.includes('Atlas Copco G 160 V2'));
+    assert.ok(output.includes('CMP02  |  Compressor ID: PNB960273'));
     assert.ok(!output.includes('DATA SCOPE & LIMITATIONS'));
     assert.ok(!output.includes('Assumed matching specifications'));
     assert.ok(!output.includes('No historical vibration series is available.'));
@@ -43,6 +43,17 @@ test('branded PDF retains section order, measured trend gaps, snapshot metadata 
     assert.ok(output.includes(`Page ${doc.getNumberOfPages()} / ${doc.getNumberOfPages()}`));
     // Every text baseline, including auto-paginated tables, stays above the footer region.
     for (const match of output.matchAll(/[-\d.]+ ([\d.]+) Td/g)) assert.ok(Number(match[1]) > 10, 'Text overflowed page bottom');
+  });
+});
+
+test('CMP2 PDF retains its configured Compressor ID, including older report payloads', async () => {
+  await compiledModule('src/modules/management/reportPdf.ts', async ({ createCompressorReportPdf }) => {
+    const fixture = result();
+    const doc = await createCompressorReportPdf(fixture);
+    assert.ok(doc.output().includes('CMP02  |  Compressor ID: PNB960273'));
+    delete fixture.context.asset.equipment;
+    const legacyDoc = await createCompressorReportPdf(fixture);
+    assert.ok(legacyDoc.output().includes('CMP02  |  Compressor ID: PNB960273'));
   });
 });
 

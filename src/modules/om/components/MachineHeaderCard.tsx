@@ -1,9 +1,9 @@
 import React from 'react';
-import { MapPin, Tag, RefreshCw, Clock, Building2 } from 'lucide-react';
+import { MapPin, Tag, RefreshCw, Clock, Building2, Maximize2 } from 'lucide-react';
 import { getCompressorImage, getAssetDisplayName } from '../utils/assetImages';
 import { AssetMeta } from '../types';
 import { COMPRESSOR_MODEL } from '../../../../shared/compressor-equipment.mjs';
-import { getAssetStatusAppearance, getOperatingStatus } from '../../../utils/assetStatus';
+import { getAssetStatusAppearance, getOperatingStatus, type AssetStatus } from '../../../utils/assetStatus';
 import { MIG_ASSET_ID, MIG_ASSET_TAG } from '../data/migSample';
 
 interface MachineHeaderCardProps {
@@ -13,10 +13,12 @@ interface MachineHeaderCardProps {
   lastUpdate?: string;
   runState?: number;
   loadState?: number;
+  operatingStatus?: AssetStatus;
   hideAssetTag?: boolean;
   hideCycleId?: boolean;
   hideStatusIndicator?: boolean;
   hideStatusDot?: boolean;
+  onImageClick?: () => void;
   className?: string;
 }
 
@@ -27,14 +29,16 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
   lastUpdate,
   runState = 1,
   loadState,
+  operatingStatus,
   hideAssetTag = false,
   hideCycleId = false,
   hideStatusIndicator = false,
   hideStatusDot = false,
+  onImageClick,
   className = '',
 }) => {
   const imageUrl = getCompressorImage(compressorId);
-  const status = getAssetStatusAppearance(getOperatingStatus(runState, loadState, compressorId));
+  const status = getAssetStatusAppearance(operatingStatus ?? getOperatingStatus(runState, loadState, compressorId));
   const displayName = getAssetDisplayName(compressorId);
   const isMig = compressorId === MIG_ASSET_ID || compressorId === MIG_ASSET_TAG;
   const isRobo =
@@ -54,20 +58,21 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
   const formattedDate = lastUpdate
     ? lastUpdate.replace('T', ' ').slice(0, 19)
     : '09 Sep 2026 23:09:26';
+  const imageClassName = 'relative w-full sm:w-28 md:w-36 shrink-0 h-24 sm:h-auto rounded-lg overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center';
+  const imageContent = <>
+    <img src={imageUrl} alt={displayName} className="w-full h-full object-cover object-center" />
+    <span className="absolute bottom-1 right-1 bg-slate-900/80 backdrop-blur-xs text-[9px] text-white px-1.5 py-0.2 rounded font-mono">
+      {isMig ? 'PI4G/TXMMIGI/26002' : isRobo ? 'PI4G/TXMMIGI/26001' : isCnc ? 'Duce Pack Cutter' : COMPRESSOR_MODEL}
+    </span>
+    {onImageClick && <Maximize2 size={14} className="absolute top-1 right-1 text-white drop-shadow" aria-hidden="true" />}
+  </>;
 
   return (
     <div className={`bg-white dark:bg-[#0c1f48] rounded-xl border border-slate-200/90 dark:border-slate-800 p-1.5 sm:p-2 shadow-2xs flex flex-col sm:flex-row items-stretch gap-2 h-full ${className}`}>
       {/* Compressor / Machine Image Container */}
-      <div className="relative w-full sm:w-28 md:w-36 shrink-0 h-24 sm:h-auto rounded-lg overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
-        <img
-          src={imageUrl}
-          alt={displayName}
-          className="w-full h-full object-cover object-center"
-        />
-        <div className="absolute bottom-1 right-1 bg-slate-900/80 backdrop-blur-xs text-[9px] text-white px-1.5 py-0.2 rounded font-mono">
-          {isMig ? 'PI4G/TXMMIGI/26002' : isRobo ? 'PI4G/TXMMIGI/26001' : isCnc ? 'Duce Pack Cutter' : COMPRESSOR_MODEL}
-        </div>
-      </div>
+      {onImageClick
+        ? <button type="button" className={`${imageClassName} cursor-zoom-in`} onClick={onImageClick} aria-label={`Expand ${displayName} image`}>{imageContent}</button>
+        : <div className={imageClassName}>{imageContent}</div>}
 
       {/* Machine Details */}
       <div className="flex-1 w-full flex flex-col justify-between py-0.2 min-w-0">

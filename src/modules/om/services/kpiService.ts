@@ -152,15 +152,15 @@ function normalizeApiResponse(
   let rmsA = 0;
   let rawCurrent = defaultCurrent;
   if (typeof parsed?.latest?.current === 'number') {
-    rmsA = parsed.latest.current;
+    rmsA = Number.isFinite(parsed.latest.current) ? parsed.latest.current : 0;
     rawCurrent = { ...defaultCurrent, rms_a: rmsA };
   } else if (typeof parsed?.latest?.current === 'object' && parsed?.latest?.current !== null) {
     rawCurrent = parsed.latest.current;
-    if (typeof rawCurrent.rms_a === 'number') {
+    if (typeof rawCurrent.rms_a === 'number' && Number.isFinite(rawCurrent.rms_a)) {
       rmsA = rawCurrent.rms_a;
-    } else if (typeof (rawCurrent as any).current === 'number') {
+    } else if (typeof (rawCurrent as any).current === 'number' && Number.isFinite((rawCurrent as any).current)) {
       rmsA = (rawCurrent as any).current;
-    } else if (typeof (rawCurrent as any).peak_current_a === 'number') {
+    } else if (typeof (rawCurrent as any).peak_current_a === 'number' && Number.isFinite((rawCurrent as any).peak_current_a)) {
       rmsA = (rawCurrent as any).peak_current_a;
     } else {
       rmsA = 0;

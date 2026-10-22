@@ -2,6 +2,21 @@
 
 This file records changes to the Texmaco Unified Dashboard in plain language. For earlier merge analysis, see [MERGE_HANDOFF.md](MERGE_HANDOFF.md).
 
+## 2026-10-12 — Texmaco branding, management alerts & equipment metadata
+
+### Look and navigation
+- Added the official Texmaco brand logo to the login screen and sidebar.
+- Added train line art illustration watermark with gradient masking to the sidebar footer.
+- Removed the inactive Reports navigation item from the sidebar (compressor advisory reports remain accessible directly in the Executive dashboard).
+- Enabled equipment photo zoom modal from the Executive machine card with accessible controls.
+
+### Management dashboard
+- Added the **Availability vs Utilization** management alert for CNC and Robo Welder in both integrated and standalone views.
+- Synchronized Executive and O&M machine cards with the unified status map by passing `operatingStatus` from `assetStatuses` instead of hardcoded 'Running', ensuring that an offline asset displays as Offline everywhere.
+
+### Equipment and reports
+- Configured Compressor 2's equipment identifier to `PNB960273` in shared metadata, report PDFs, AI advisory prompts, documentation, and automated tests.
+
 ## 2026-10-10 — Financial intelligence live update & input assumptions
 
 ### Financial dashboard

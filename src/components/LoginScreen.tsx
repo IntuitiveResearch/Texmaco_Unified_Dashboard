@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
+import texmacoLogo from '../assets/texmaco-logo.png';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: { uid: string; name: string }) => void;
@@ -52,9 +53,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#0d224d_1px,transparent_1px),linear-gradient(to_bottom,#0d224d_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] opacity-35 pointer-events-none" />
 
       {/* Top Header */}
-      <header className="w-full max-w-5xl mx-auto flex items-center justify-between py-3 relative z-10">
-        <div className="flex items-center gap-3">
-          <div>
+      <header className="w-full max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 py-3 relative z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="bg-white rounded-xl px-2 py-1 shadow-lg shadow-black/20 shrink-0">
+            <img src={texmacoLogo} alt="Texmaco Rail & Engineering Ltd." className="w-24 sm:w-28 h-12 sm:h-14 object-contain" />
+          </div>
+          <div className="min-w-0">
             <h2 className="text-sm font-bold tracking-wide uppercase text-slate-200">
               Texmaco Rail & Engineering
             </h2>

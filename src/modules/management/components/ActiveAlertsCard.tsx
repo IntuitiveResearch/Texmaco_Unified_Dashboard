@@ -1,12 +1,14 @@
 import React from 'react';
 import { AlertTriangle, Bell, Info } from 'lucide-react';
 import { DashboardSummary, ThermalRates } from '../types';
+import { formatPercent } from '../utils';
 import { cn } from './KPICard';
 
 interface Props {
   summary: DashboardSummary;
   thermalRates: ThermalRates[];
-  isCnc?: boolean;
+  isCncOrRobo?: boolean;
+  avgUtilization?: number;
   className?: string;
 }
 
@@ -16,7 +18,15 @@ export interface ManagementAlert {
   severity: 'HIGH' | 'MEDIUM';
 }
 
-export function getManagementAlerts(summary: DashboardSummary, thermalRates: ThermalRates[]): ManagementAlert[] {
+export function getManagementAlerts(summary: DashboardSummary, thermalRates: ThermalRates[], isCncOrRobo = false, avgUtilization = summary.avg_utilization ?? 0): ManagementAlert[] {
+  if (isCncOrRobo) {
+    return [{
+      title: 'Availability vs Utilization',
+      message: `Availability is ${formatPercent(summary.availability)} but utilization is ${avgUtilization.toFixed(1)}%.`,
+      severity: 'MEDIUM'
+    }];
+  }
+
   const alerts: ManagementAlert[] = [];
 
   // High Temperature
@@ -61,8 +71,8 @@ export function getManagementAlerts(summary: DashboardSummary, thermalRates: The
   return alerts;
 }
 
-export function ActiveAlertsCard({ summary, thermalRates, isCnc = false, className }: Props) {
-  const alerts = isCnc ? [] : getManagementAlerts(summary, thermalRates);
+export function ActiveAlertsCard({ summary, thermalRates, isCncOrRobo = false, avgUtilization, className }: Props) {
+  const alerts = getManagementAlerts(summary, thermalRates, isCncOrRobo, avgUtilization);
   const alertCount = alerts.length;
 
   return (
