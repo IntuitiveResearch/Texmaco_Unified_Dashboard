@@ -14,12 +14,7 @@ export interface PrescriptiveReport {
 
 export interface CompressorEquipmentProfile {
   manufacturer: string; model: string; assignment_status: string; source: string;
-  nameplate_ratings: {
-    maximum_final_pressure_bar_e: number;
-    rated_free_air_delivery_l_per_s: number;
-    rated_free_air_delivery_m3_per_min: number;
-    motor_rating_kw: number;
-  };
+  nameplate_ratings?: Record<string, unknown> | null;
   serial_number: string | null; manufacture_year: number | null;
   drive_type: string | null; cooling_type: string | null;
   rated_motor_current_a: number | null;
@@ -31,13 +26,26 @@ export interface CompressorEquipmentProfile {
 export interface ReportResponse {
   report: PrescriptiveReport;
   context: {
-    asset: { id: string; device_type: string; plant: string; equipment?: CompressorEquipmentProfile };
+    asset: { id: string; original_id?: string; device_type: string; plant: string; equipment?: CompressorEquipmentProfile };
     start_date: string; end_date: string; snapshot_date: string; timezone: string;
     fetched_at: string; generated_at: string; scope: string;
     coverage: { requested_days: number; available_days: number; missing_dates: string[]; missing_dates_by_series: Record<string, string[]> };
     latest: Record<string, { available: boolean; measured_at: string | null; freshness: { status: string; age_seconds: number | null } }>;
     trends: Array<{ date: string; availability_pct: number | null; runtime_hours: number | null; downtime_hours: number | null }>;
-    kpis: { availability_pct: number | null; interruptions: number | null; restarts: number | null; utilization_pct: number | null; maximum_temperature_c: number | null; peak_current_a: number | null; today_availability_pct: number | null; today_interruptions: number | null };
+    kpis: {
+      availability_pct: number | null;
+      interruptions: number | null;
+      restarts: number | null;
+      utilization_pct: number | null;
+      maximum_temperature_c: number | null;
+      peak_current_a: number | null;
+      today_availability_pct: number | null;
+      today_interruptions: number | null;
+      cycle_count?: number | null;
+      idle_seconds?: number | null;
+      downtime_seconds?: number | null;
+      runtime_seconds?: number | null;
+    };
     prompt_version: string; model: string;
     knowledge_version?: string; knowledge_rule_ids?: string[];
   };

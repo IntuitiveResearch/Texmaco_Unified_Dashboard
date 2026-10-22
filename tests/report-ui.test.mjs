@@ -214,7 +214,7 @@ test('HTTP handler handles malformed input, unsupported assets and missing confi
       const endpoint = `http://127.0.0.1:${server.address().port}/api/analyze-report`;
       assert.equal((await fetch(endpoint)).status, 405);
       assert.equal((await fetch(endpoint, { method: 'POST', body: '{' })).status, 400);
-      assert.equal((await fetch(endpoint, { method: 'POST', body: JSON.stringify({ compressor: 'CNC#01' }) })).status, 400);
+      assert.equal((await fetch(endpoint, { method: 'POST', body: JSON.stringify({ compressor: 'CRANE#01' }) })).status, 400);
       const missingKey = await fetch(endpoint, { method: 'POST', body: JSON.stringify({ compressor: 'CMP#01' }) });
       assert.equal(missingKey.status, 503);
       assert.match((await missingKey.json()).error, /GEMINI_API_KEY/);
@@ -223,5 +223,38 @@ test('HTTP handler handles malformed input, unsupported assets and missing confi
       await new Promise(resolve => server.close(resolve));
       if (previousKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = previousKey;
     }
+  });
+});
+
+test('CNC and Robo Welder PDFs render proper headers, equipment branding, and cycle KPIs', async () => {
+  await compiledModule('src/modules/management/reportPdf.ts', async ({ createCompressorReportPdf }) => {
+    const cncPayload = {
+      ...result(),
+      context: {
+        ...result().context,
+        asset: { id: 'CNC#01', device_type: 'cnc_cutter', plant: 'Texmaco - Agarpara', equipment: { manufacturer: null, model: 'Metal Oxide Cutter' } },
+        kpis: { availability_pct: 75.5, cycle_count: 142, utilization_pct: 68.2, downtime_seconds: 7200 },
+      },
+    };
+    const docCnc = await createCompressorReportPdf(cncPayload);
+    const textCnc = docCnc.output();
+    assert.ok(textCnc.includes('CNC CUTTER HEALTH ADVISORY'));
+    assert.ok(textCnc.includes('Metal Oxide Cutter'));
+    assert.ok(!textCnc.includes('ESAB'));
+    assert.ok(textCnc.includes('TOTAL CYCLES'));
+
+    const roboPayload = {
+      ...result(),
+      context: {
+        ...result().context,
+        asset: { id: 'ROBO#01', device_type: 'welding_robot', plant: 'Texmaco - Agarpara', equipment: { manufacturer: null, model: 'Robotic Arm Welder' } },
+        kpis: { availability_pct: 82.0, cycle_count: 310, utilization_pct: 71.5, downtime_seconds: 3600 },
+      },
+    };
+    const docRobo = await createCompressorReportPdf(roboPayload);
+    const textRobo = docRobo.output();
+    assert.ok(textRobo.includes('ROBOTIC WELDER HEALTH ADVISORY'));
+    assert.ok(textRobo.includes('Robot welder'));
+    assert.ok(!textRobo.includes('CLOOS'));
   });
 });

@@ -2,6 +2,26 @@
 
 This file records changes to the Texmaco Unified Dashboard in plain language. For earlier merge analysis, see [MERGE_HANDOFF.md](MERGE_HANDOFF.md).
 
+## 2026-10-22 — Generative RCA reports enabled for all four assets
+
+### Intuitive AI reports
+- Enabled the Intuitive AI report button for all four assets (`CMP#01`, `CMP#02`, `CNC#01`, and `ROBO#01`) in the Management dashboard header and standalone management view without changing the visual dashboard styling.
+- Prepared specialized system prompts for Gemini API tailored to each equipment type:
+  - **Atlas Copco G 160 V2 Compressors** (`CMP#01`, `CMP#02`): Cooling, lubrication, motor current, and vibration mechanics.
+  - **Metal Oxide Cutter** (`CNC#01`): Cutting throughput, idle plate setup and crane handling, torch consumable wear (nozzle/orifice erosion), and gantry rail motion.
+  - **Robotic Arm Welder** (`ROBO#01`): Weld cycle stability, arc-on utilization vs idle part-handling/clamping, wire feeder tension, and torch nozzle spatter cleaning.
+- Removed brand name mentions (CLOOS and ESAB) across metadata, system prompts, limitation text, UI modals, and PDF advisory exports for CNC and Robo Welder assets.
+- Configured API parameter mapping when calling upstream `/dashboard`:
+  - `CNC#01` queries `MACHINE#PI4G/TXMCNCI/26001`.
+  - `ROBO#01` queries `MACHINE#PI4G/TXMMIGI/26001`.
+- Added support for the distinct CNC and Robo Welder `/dashboard` response structure (cycles, operational utilization, runtime/idle/downtime, time breakdown) without requiring missing compressor sensor streams.
+- Updated the 2-page PDF advisory generator:
+  - Dynamic titles: "COMPRESSOR HEALTH ADVISORY", "CNC CUTTER HEALTH ADVISORY", and "ROBOTIC WELDER HEALTH ADVISORY".
+  - Dynamic top KPI tiles: displays Cycle Count and Utilization % in place of temperature/vibration for CNC and Robo Welder.
+  - Page 2 vector trend charts display Daily Availability % and Uptime/Downtime hours for all four assets.
+  - Updated Robot Welder asset identifier in the PDF advisory banner and report modal to display "Robot welder" only.
+- Added automated unit and integration tests covering telemetry ingestion, prompt dispatch, upstream mapping, brand neutrality, and PDF generation for all four assets (41 tests passing).
+
 ## 2026-10-12 — Texmaco branding, management alerts & equipment metadata
 
 ### Look and navigation

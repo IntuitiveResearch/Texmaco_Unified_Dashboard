@@ -1,7 +1,10 @@
-import { getCompressorEquipment } from '../shared/compressor-equipment.mjs';
+import {
+  canonicalAssetId,
+  getAssetEquipment,
+  SUPPORTED_ASSETS,
+} from '../shared/asset-equipment.mjs';
 
-// Reporting uses raw API responses, never the UI's zero/mock fallback normalizers.
-export const SUPPORTED_ASSETS = ['CMP#01', 'CMP#02'];
+export { SUPPORTED_ASSETS };
 export const TIMEZONE = 'Asia/Kolkata';
 const DAY = 86400000;
 const numeric = value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''))
@@ -26,8 +29,9 @@ export function reportWindow(now = new Date()) {
   return { start_date: date(-30), end_date: date(-1), snapshot_date: today, timezone: TIMEZONE };
 }
 
-const SUMMARY_FIELDS = `runtime_seconds downtime_seconds offline_seconds availability runtime_percentage downtime_percentage offline_percentage trip_count restart_count mtbi_seconds recovery_time_seconds average_runtime_seconds longest_runtime_seconds longest_downtime_seconds average_current median_current minimum_current maximum_current p95_current standard_deviation_current variance_current peak_current loaded_runtime_seconds unloaded_runtime_seconds idle_runtime_seconds idle_percentage high_current_events high_current_duration current_sampling_interval current_coverage average_temperature median_temperature minimum_temperature maximum_temperature p95_temperature standard_deviation_temperature variance_temperature temperature_range high_temperature_events high_temperature_duration average_temperature_rise average_temperature_fall temperature_drift temperature_sampling_interval temperature_coverage`.split(' ');
-const GRAPH_FIELDS = {
+const SUMMARY_FIELDS = `runtime_seconds downtime_seconds offline_seconds idle_seconds availability avg_utilization cycle_count runtime_percentage downtime_percentage offline_percentage idle_percentage confidence trip_count restart_count mtbi_seconds recovery_time_seconds average_runtime_seconds longest_runtime_seconds longest_downtime_seconds average_current median_current minimum_current maximum_current p95_current standard_deviation_current variance_current peak_current loaded_runtime_seconds unloaded_runtime_seconds idle_runtime_seconds high_current_events high_current_duration current_sampling_interval current_coverage average_temperature median_temperature minimum_temperature maximum_temperature p95_temperature standard_deviation_temperature variance_temperature temperature_range high_temperature_events high_temperature_duration average_temperature_rise average_temperature_fall temperature_drift temperature_sampling_interval temperature_coverage`.split(' ');
+
+const GRAPH_FIELDS_COMPRESSOR = {
   runtime_distribution: ['runtime', 'downtime', 'offline'],
   availability: ['value'],
   current_analysis: ['average', 'median', 'p95', 'peak'],
@@ -37,6 +41,13 @@ const GRAPH_FIELDS = {
   reliability: ['interruptions', 'restarts', 'average_run_length', 'mtbi', 'recovery_time'],
   events: ['high_current_events', 'high_temperature_events'],
   vibration_analysis: ['average', 'median', 'maximum', 'peak', 'axis_x_rms_g', 'axis_y_rms_g', 'axis_z_rms_g'],
+};
+
+const GRAPH_FIELDS_CNC_ROBO = {
+  runtime_distribution: ['runtime', 'idle', 'downtime'],
+  availability: ['value'],
+  cycle_count: ['cycle_count'],
+  utilization: ['value'],
 };
 
 function pickNumbers(raw, fields) {
@@ -73,21 +84,48 @@ function sensor(raw, kind, now) {
 }
 
 export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Date()) {
-  if (!SUPPORTED_ASSETS.includes(asset)) throw new Error('Reports support Compressor 1 and 2 only.');
+  const canonical = canonicalAssetId(asset);
+  if (!canonical || !SUPPORTED_ASSETS.includes(canonical)) {
+    throw new Error('Reports support Compressor 1, Compressor 2, CNC 1, and Robo Welder 1 only.');
+  }
+
+  const isCnc = canonical === 'CNC#01';
+  const isRobo = canonical === 'ROBO#01';
+  const isCncOrRobo = isCnc || isRobo;
+
   const history = unwrapResponse(historyRaw);
   const snapshot = unwrapResponse(snapshotRaw);
-  if (snapshot.compressor && snapshot.compressor.replace('#', '') !== asset.replace('#', '')) {
-    throw new Error('Latest telemetry belongs to a different asset.');
+
+  if (snapshot.compressor) {
+    const snapCanonical = canonicalAssetId(snapshot.compressor);
+    if (snapCanonical && snapCanonical !== canonical) {
+      throw new Error('Latest telemetry belongs to a different asset.');
+    }
   }
+
   const window = reportWindow(now);
-  const equipment = getCompressorEquipment(asset);
-  const limitations = ['G 160 V2 model and nameplate ratings are assumed to match both compressors; manufacture year is unassigned.'];
-  if (!equipment.serial_number) limitations.push('Individual compressor serial number is unassigned.');
+  const equipment = getAssetEquipment(canonical);
+
+  const limitations = [];
+  if (isCnc) {
+    limitations.push('Metal Oxide Cutter configured equipment ratings are used; individual manufacture year is unassigned.');
+    limitations.push('Thermal and vibration telemetry are not instrumented on this CNC cutter; analysis evaluates cycle count and operational availability.');
+  } else if (isRobo) {
+    limitations.push('Robotic Arm Welder configured equipment ratings are used; individual manufacture year is unassigned.');
+    limitations.push('Thermal and vibration telemetry are not instrumented on this robotic welding cell; analysis evaluates weld cycles and arc utilization.');
+  } else {
+    limitations.push('G 160 V2 model and nameplate ratings are assumed to match both compressors; manufacture year is unassigned.');
+    if (!equipment.serial_number) limitations.push('Individual compressor serial number is unassigned.');
+  }
+
   const summary = pickNumbers(history.summary, SUMMARY_FIELDS);
   const daily = {};
   const missingDates = {};
   const requestedDates = Array.from({ length: 30 }, (_, i) => new Date(Date.parse(`${window.start_date}T00:00:00Z`) + i * DAY).toISOString().slice(0, 10));
-  for (const [key, fields] of Object.entries(GRAPH_FIELDS)) {
+
+  const graphSchema = isCncOrRobo ? GRAPH_FIELDS_CNC_ROBO : GRAPH_FIELDS_COMPRESSOR;
+
+  for (const [key, fields] of Object.entries(graphSchema)) {
     const rows = history.graphs?.[key] ?? (key === 'runtime_distribution' ? history.graphs?.runtime : undefined);
     const seen = new Set();
     daily[key] = (Array.isArray(rows) ? rows : []).filter(row => {
@@ -99,71 +137,106 @@ export function assembleReportInput(asset, historyRaw, snapshotRaw, now = new Da
     const measuredDates = new Set(daily[key].filter(row => fields.some(f => row[f] !== null)).map(row => row.date));
     missingDates[key] = requestedDates.filter(date => !measuredDates.has(date));
   }
-  if (!Object.values(summary).some(v => v !== null) && !Object.values(daily).flat().some(row => Object.entries(row).some(([key, value]) => key !== 'date' && value !== null))) {
+
+  // Ensure all compressor graph series exist as arrays even on CNC/Robo for uniform downstream handling
+  if (isCncOrRobo) {
+    for (const key of Object.keys(GRAPH_FIELDS_COMPRESSOR)) {
+      if (!daily[key]) daily[key] = [];
+      if (!missingDates[key]) missingDates[key] = requestedDates;
+    }
+  }
+
+  const hasSummary = Object.values(summary).some(v => v !== null);
+  const hasDaily = Object.values(daily).flat().some(row => Object.entries(row).some(([key, value]) => key !== 'date' && value !== null));
+  if (!hasSummary && !hasDaily) {
     throw new Error('No historical measurements are available for this report.');
   }
+
   const observed = new Set(Object.values(daily).flat().filter(row => Object.entries(row).some(([k, v]) => k !== 'date' && v !== null)).map(row => row.date));
   const missing = requestedDates.filter(d => !observed.has(d));
   if (missing.length) limitations.push(`${missing.length} of 30 requested historical dates have no daily measurements.`);
-  for (const key of ['current_analysis', 'thermal_analysis', 'thermal_rates', 'vibration_analysis']) {
-    if (missingDates[key].length) limitations.push(`${key}: ${30 - missingDates[key].length}/30 days available.`);
+
+  if (!isCncOrRobo) {
+    for (const key of ['current_analysis', 'thermal_analysis', 'thermal_rates', 'vibration_analysis']) {
+      if (missingDates[key]?.length) limitations.push(`${key}: ${30 - missingDates[key].length}/30 days available.`);
+    }
   }
+
   const rawLatest = object(snapshot.latest);
   const latest = {
     current: sensor(rawLatest.current, 'current', now),
     temperature: sensor(rawLatest.temperature, 'temperature', now),
     vibration: sensor(rawLatest.motioniq ?? rawLatest.vibration, 'vibration', now),
   };
-  for (const [name, reading] of Object.entries(latest)) {
-    if (!reading.available) limitations.push(`Latest ${name} measurements are unavailable.`);
-    else if (reading.freshness.status !== 'recent') limitations.push(`Latest ${name} freshness: ${reading.freshness.status}; measurement timestamp: ${reading.measured_at ?? 'not supplied'}.`);
+
+  if (!isCncOrRobo) {
+    for (const [name, reading] of Object.entries(latest)) {
+      if (!reading.available) limitations.push(`Latest ${name} measurements are unavailable.`);
+      else if (reading.freshness.status !== 'recent') limitations.push(`Latest ${name} freshness: ${reading.freshness.status}; measurement timestamp: ${reading.measured_at ?? 'not supplied'}.`);
+    }
+    if (latest.vibration.values.scalar_value !== undefined) limitations.push('Latest scalar vibration has no documented unit; absolute severity thresholds cannot be applied.');
+    limitations.push('Historical thermal-rate units and sensor sampling/coverage units are not specified by the API; do not assume them.');
   }
-  if (latest.vibration.values.scalar_value !== undefined) limitations.push('Latest scalar vibration has no documented unit; absolute severity thresholds cannot be applied.');
-  limitations.push('Historical thermal-rate units and sensor sampling/coverage units are not specified by the API; do not assume them.');
-  const runs = new Map(daily.runtime_distribution.map(row => [row.date, row.runtime]));
-  const utilizations = daily.utilization.flatMap(row => {
-    const runtime = runs.get(row.date);
-    return row.loaded !== null && runtime > 0 && row.loaded >= 0 && row.loaded <= runtime ? [row.loaded / runtime * 100] : [];
-  });
-  const tempMaxima = daily.thermal_analysis.map(row => row.maximum).filter(v => v !== null);
-  const currentPeaks = [summary.peak_current, summary.maximum_current, ...daily.current_analysis.map(row => row.peak)].filter(v => v !== null);
-  // Only label aggregates "today" when the source explicitly confirms the requested period.
+
+  const runs = new Map((daily.runtime_distribution || []).map(row => [row.date, row.runtime]));
+  const utilizations = isCncOrRobo
+    ? (daily.utilization || []).map(row => row.value).filter(v => v !== null && v >= 0 && v <= 100)
+    : (daily.utilization || []).flatMap(row => {
+        const runtime = runs.get(row.date);
+        return row.loaded !== null && runtime > 0 && row.loaded >= 0 && row.loaded <= runtime ? [row.loaded / runtime * 100] : [];
+      });
+
+  const tempMaxima = (daily.thermal_analysis || []).map(row => row.maximum).filter(v => v !== null);
+  const currentPeaks = [summary.peak_current, summary.maximum_current, ...(daily.current_analysis || []).map(row => row.peak)].filter(v => v !== null);
+
   const todayScope = snapshot.date_range?.start_date === window.snapshot_date && snapshot.date_range?.end_date === window.snapshot_date;
   const today_kpis = {
     availability_pct: todayScope ? numeric(snapshot.kpis?.availability) : null,
     interruptions: todayScope ? numeric(snapshot.kpis?.interruptions) : null,
   };
-  if (!todayScope) limitations.push('Today-specific availability and interruptions are unavailable: snapshot aggregate date scope is not confirmed.');
+  if (!todayScope && !isCncOrRobo) {
+    limitations.push('Today-specific availability and interruptions are unavailable: snapshot aggregate date scope is not confirmed.');
+  }
+
   const chart_days = requestedDates.slice(-7).map(date => {
-    const runtime = daily.runtime_distribution.find(row => row.date === date);
-    const availability = daily.availability.find(row => row.date === date)?.value ?? null;
-    return { date, availability_pct: availability !== null && availability >= 0 && availability <= 100 ? availability : null,
+    const runtime = (daily.runtime_distribution || []).find(row => row.date === date);
+    const availability = (daily.availability || []).find(row => row.date === date)?.value ?? null;
+    return {
+      date,
+      availability_pct: availability !== null && availability >= 0 && availability <= 100 ? availability : null,
       runtime_hours: runtime?.runtime !== null && runtime?.runtime >= 0 ? runtime.runtime / 3600 : null,
-      downtime_hours: runtime?.downtime !== null && runtime?.downtime >= 0 ? runtime.downtime / 3600 : null };
+      downtime_hours: runtime?.downtime !== null && runtime?.downtime >= 0 ? runtime.downtime / 3600 : null,
+    };
   });
+
   return {
-    asset: { id: asset, device_type: 'compressor', plant: 'Texmaco - Agarpara', equipment },
+    asset: { id: canonical, original_id: asset, device_type: equipment.device_type, plant: 'Texmaco - Agarpara', equipment },
     report_context: { ...window, fetched_at: now.toISOString(), scope: '30 completed calendar days plus latest available snapshot' },
     historical: {
       summary, daily, chart_days,
+      time_breakdown: history.graphs?.time_breakdown || null,
       coverage: { requested_days: 30, available_days: observed.size, missing_dates: missing, missing_dates_by_series: missingDates },
       derived: {
-        mean_daily_loaded_utilization_pct: utilizations.length ? utilizations.reduce((a, b) => a + b, 0) / utilizations.length : null,
+        mean_daily_loaded_utilization_pct: utilizations.length
+          ? utilizations.reduce((a, b) => a + b, 0) / utilizations.length
+          : (summary.avg_utilization ?? null),
         utilization_observed_days: utilizations.length,
-        maximum_observed_temperature_c: tempMaxima.length ? Math.max(...tempMaxima) : summary.maximum_temperature,
+        maximum_observed_temperature_c: tempMaxima.length ? Math.max(...tempMaxima) : (summary.maximum_temperature ?? null),
         peak_current_a: currentPeaks.length ? Math.max(...currentPeaks) : null,
+        total_cycle_count: summary.cycle_count ?? (daily.cycle_count?.length ? daily.cycle_count.reduce((sum, r) => sum + (r.cycle_count || 0), 0) : null),
       },
       metric_definitions: {
-        runtime_distribution: 'seconds; offline is separate from downtime',
-        utilization: 'daily loaded/unloaded/idle durations in seconds',
-        mean_daily_loaded_utilization_pct: 'Unweighted mean of loaded/runtime * 100 for valid days with runtime > 0; excludes missing or invalid days',
-        current_analysis: 'amperes', thermal_analysis: 'degrees C', thermal_rates: 'unit unspecified by source API',
-        reliability: 'interruptions/restarts are counts; mtbi, average_run_length, recovery_time are seconds; interruptions are not proven failures',
+        runtime_distribution: isCncOrRobo ? 'seconds; runtime, idle, downtime' : 'seconds; offline is separate from downtime',
+        utilization: isCncOrRobo ? 'daily operational utilization %' : 'daily loaded/unloaded/idle durations in seconds',
+        cycle_count: 'daily completed operational cycles',
         availability: 'percent as provided by historical API',
       },
     },
     latest,
     today_kpis,
-    data_quality: { missing_summary_fields: SUMMARY_FIELDS.filter(k => summary[k] === null), limitations },
+    data_quality: {
+      missing_summary_fields: SUMMARY_FIELDS.filter(k => summary[k] === null),
+      limitations,
+    },
   };
 }

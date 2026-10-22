@@ -50,7 +50,7 @@ test('CMP2 axis vibration and zero thermal rate are preserved; ambiguous timesta
 });
 
 test('no-data, unsupported assets and mismatched snapshots cannot silently generate a healthy report', () => {
-  assert.throws(() => assembleReportInput('CNC#01', history(), scalar(), now), /only/);
+  assert.throws(() => assembleReportInput('CRANE#01', history(), scalar(), now), /only/);
   assert.throws(() => assembleReportInput('CMP#01', {}, scalar(), now), /No historical/);
   assert.throws(() => assembleReportInput('CMP#01', { graphs: { current_analysis: [{ date: '2026-09-27', average: null }] } }, scalar(), now), /No historical/);
   assert.throws(() => assembleReportInput('CMP#01', history(), structured(), now), /different asset/);
@@ -178,5 +178,69 @@ test('Gemini quota errors and truncated JSON cannot be shown as completed', asyn
       if (url.includes('/operational_kpi')) return Response.json(scalar());
       return providerResponse;
     } }), /quota|incomplete/);
+  }
+});
+
+const cncHistory = () => ({
+  summary: {
+    runtime_seconds: 2948, idle_seconds: 1200, downtime_seconds: 60099,
+    availability: 30.4394, avg_utilization: 11.2, cycle_count: 43,
+  },
+  graphs: {
+    availability: [{ date: '2026-09-27', value: 30.4394 }],
+    runtime_distribution: [{ date: '2026-09-27', runtime: 2948, idle: 1200, downtime: 60099 }],
+    cycle_count: [{ date: '2026-09-27', cycle_count: 43 }],
+    utilization: [{ date: '2026-09-27', value: 11.2096 }],
+    time_breakdown: { runtime_seconds: 2948, idle_seconds: 1200, downtime_seconds: 60099, runtime_percentage: 4.6, idle_percentage: 1.9, downtime_percentage: 93.5 },
+  },
+});
+
+test('CNC#01 telemetry ingestion correctly maps Metal Oxide Cutter metadata, cycle counts and utilization', () => {
+  const input = assembleReportInput('CNC#01', cncHistory(), {}, now);
+  assert.equal(input.asset.id, 'CNC#01');
+  assert.equal(input.asset.device_type, 'cnc_cutter');
+  assert.equal(input.asset.equipment.manufacturer, null);
+  assert.equal(input.asset.equipment.model, 'Metal Oxide Cutter');
+  assert.equal(input.historical.derived.total_cycle_count, 43);
+  assert.equal(input.historical.derived.mean_daily_loaded_utilization_pct, 11.2096);
+  assert.ok(input.data_quality.limitations.some(text => text.includes('Metal Oxide Cutter')));
+  assert.ok(input.data_quality.limitations.some(text => text.includes('Thermal and vibration telemetry are not instrumented')));
+  assert.equal(input.historical.chart_days[6].runtime_hours, 2948 / 3600);
+});
+
+test('ROBO#01 telemetry ingestion correctly maps Robotic Arm Welder metadata and welding cycles', () => {
+  const input = assembleReportInput('ROBO#01', cncHistory(), {}, now);
+  assert.equal(input.asset.id, 'ROBO#01');
+  assert.equal(input.asset.device_type, 'welding_robot');
+  assert.equal(input.asset.equipment.manufacturer, null);
+  assert.equal(input.asset.equipment.model, 'Robotic Arm Welder');
+  assert.ok(input.data_quality.limitations.some(text => text.includes('Robotic Arm Welder')));
+});
+
+test('generateReport dispatches correct upstream API identifiers and prompts without brand names', async () => {
+  for (const [asset, expectedApiId, expectedModel] of [
+    ['CNC#01', 'MACHINE#PI4G/TXMCNCI/26001', 'Metal Oxide Cutter'],
+    ['ROBO#01', 'MACHINE#PI4G/TXMMIGI/26001', 'Robotic Arm Welder'],
+  ]) {
+    const calls = [];
+    const result = await generateReport(asset, {
+      env: { GEMINI_API_KEY: 'test-key', GEMINI_MODEL: 'test-model' }, now,
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        if (url.endsWith('/dashboard')) return Response.json(cncHistory());
+        if (url.includes('/operational_kpi')) return Response.json({});
+        const payload = JSON.parse(options.body);
+        assert.ok(payload.systemInstruction.parts[0].text.includes(expectedModel));
+        assert.ok(!payload.systemInstruction.parts[0].text.includes('ESAB'));
+        assert.ok(!payload.systemInstruction.parts[0].text.includes('CLOOS'));
+        const evidence = JSON.parse(payload.contents[0].parts[0].text);
+        assert.equal(evidence.asset.equipment.model, expectedModel);
+        return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ ...validReport(), root_causes: [] }) }] } }] });
+      },
+    });
+    assert.equal(calls.length, 3);
+    assert.equal(JSON.parse(calls[0].options.body).compressor, expectedApiId);
+    assert.equal(result.context.asset.equipment.model, expectedModel);
+    assert.equal(result.context.kpis.cycle_count, 43);
   }
 });

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, X, AlertTriangle, CheckCircle2, Download, RotateCcw, FileCheck } from 'lucide-react';
 import { requestCompressorReport } from '../reportClient';
 import type { ReportResponse } from '../reportTypes';
@@ -19,7 +19,9 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
     const version = ++requestVersion.current;
     setStatus('generating'); setResult(null); setError(null);
     try {
-      if (!['CMP#01', 'CMP#02'].includes(compressor)) throw new Error('Reports currently support Compressor 1 and Compressor 2 only.');
+      const isAllowed = ['CMP#01', 'CMP#02', 'CNC#01', 'ROBO#01'].includes(compressor) ||
+        compressor.includes('TXMCNCI') || compressor.includes('TXMMIGI');
+      if (!isAllowed) throw new Error('Reports currently support Compressor 1, Compressor 2, CNC 1, and Robo Welder 1 only.');
       const report = await requestCompressorReport(compressor);
       if (version !== requestVersion.current) return;
       setResult(report); setStatus('completed');
@@ -46,6 +48,10 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
     finally { setIsGeneratingPdf(false); }
   };
 
+  const isCnc = compressor.includes('CNC') || compressor.includes('TXMCNCI');
+  const isRobo = compressor.includes('ROBO') || compressor.includes('TXMMIGI');
+  const advisoryTitle = isCnc ? 'CNC Cutter Health Advisory' : isRobo ? 'Robotic Welder Health Advisory' : 'Compressor Health Advisory';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
       <div role="dialog" aria-modal="true" aria-labelledby="report-title" className="bg-[var(--panel)] border border-[var(--line)] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
@@ -53,8 +59,8 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--chip)] flex items-center justify-center text-[var(--cyan)]"><Bot size={22} /></div>
             <div>
-              <h2 id="report-title" className="text-[17px] font-bold text-[var(--text)]">{status === 'generating' ? 'Running AI Diagnostics' : 'Compressor Health Advisory'}</h2>
-              <span className="text-[12px] text-[var(--muted)]">{compressor}</span>
+              <h2 id="report-title" className="text-[17px] font-bold text-[var(--text)]">{status === 'generating' ? 'Running AI Diagnostics' : advisoryTitle}</h2>
+              <span className="text-[12px] text-[var(--muted)]">{isRobo ? 'Robot welder' : compressor}</span>
             </div>
           </div>
           <button onClick={onClose} aria-label="Close report" className="p-2 text-[var(--muted)] hover:text-[var(--text)]"><X size={18} /></button>
@@ -73,7 +79,7 @@ export function ReportModal({ compressor = 'CMP#01', onClose }: ReportModalProps
           )}
           {status === 'completed' && result && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-[var(--emerald)]"><FileCheck size={32} /><h3 className="font-bold text-lg">Compressor Health Advisory Ready</h3><CheckCircle2 size={18} /></div>
+              <div className="flex items-center gap-3 text-[var(--emerald)]"><FileCheck size={32} /><h3 className="font-bold text-lg">{advisoryTitle} Ready</h3><CheckCircle2 size={18} /></div>
               <p className="text-[13px] text-[var(--text)]">{result.report.executive_summary}</p>
               <button onClick={downloadPDF} disabled={isGeneratingPdf} className="w-full flex items-center justify-center gap-2 bg-[var(--cyan)] text-white font-bold py-3.5 px-6 rounded-xl text-sm disabled:opacity-50"><Download size={18} />{isGeneratingPdf ? 'Generating PDF...' : 'Download PDF Report'}</button>
               <button onClick={startAnalysis} disabled={isGeneratingPdf} className="flex items-center gap-1.5 text-xs text-[var(--muted)] hover:underline disabled:opacity-50"><RotateCcw size={12} />Re-run Analysis</button>

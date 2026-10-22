@@ -26,15 +26,23 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
   const margin = 10, width = 210, contentWidth = 190;
   const asset = context.asset.id.replace('#', '');
   const equipment = context.asset.equipment;
+  const isCnc = asset.includes('CNC') || context.asset.device_type === 'cnc_cutter';
+  const isRobo = asset.includes('ROBO') || context.asset.device_type === 'welding_robot';
   const serialNumber = asset === 'CMP01' ? COMPRESSOR_1_SERIAL_NUMBER : asset === 'CMP02' ? COMPRESSOR_2_SERIAL_NUMBER : equipment?.serial_number;
   const date = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(context.generated_at));
-  doc.setProperties({ title: `${asset} Root Cause Analysis & Prescriptive Report`, subject: 'Compressor condition monitoring advisory', author: 'IntuitiveIntelligence' });
+  doc.setProperties({ title: `${asset} Root Cause Analysis & Prescriptive Report`, subject: `${isCnc ? 'CNC Cutter' : isRobo ? 'Robotic Welder' : 'Compressor'} condition monitoring advisory`, author: 'IntuitiveIntelligence' });
   let y = 22;
   doc.setFillColor(...navy); doc.rect(margin, y, contentWidth, 25, 'F');
   doc.setTextColor(255, 255, 255); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
-  doc.text('COMPRESSOR HEALTH ADVISORY', margin + 4, y + 8);
+  const bannerTitle = isCnc ? 'CNC CUTTER HEALTH ADVISORY' : isRobo ? 'ROBOTIC WELDER HEALTH ADVISORY' : 'COMPRESSOR HEALTH ADVISORY';
+  const bannerSubtitle = isCnc
+    ? `${asset}  |  ${equipment?.model || 'Metal Oxide Cutter'}`
+    : isRobo
+    ? 'Robot welder'
+    : `${asset}${serialNumber ? `  |  Compressor ID: ${serialNumber}` : equipment ? `  |  ${equipment.manufacturer} ${equipment.model}` : ''}`;
+  doc.text(bannerTitle, margin + 4, y + 8);
   doc.setFontSize(9); doc.setTextColor(245, 158, 11);
-  doc.text(`${asset}${serialNumber ? `  |  Compressor ID: ${serialNumber}` : equipment ? `  |  ${equipment.manufacturer} ${equipment.model}` : ''}`, margin + 4, y + 14);
+  doc.text(bannerSubtitle, margin + 4, y + 14);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(203, 213, 225);
   doc.text(`${date}  |  Internal  |  Root Cause Analysis & Prescriptive Report`, margin + 4, y + 21);
   doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
@@ -49,7 +57,13 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
     measured(value) ? [{ value: `${value.toFixed(digits)}${suffix}`, label, color }] : [];
   const kpi = context.kpis;
   const todayAvailable = measured(kpi.today_availability_pct);
-  const cells: KpiCell[] = [
+  const cells: KpiCell[] = isCnc || isRobo ? [
+    ...metric(todayAvailable ? kpi.today_availability_pct : kpi.availability_pct, todayAvailable ? "TODAY'S\nAVAILABILITY" : '30-DAY\nAVAILABILITY', 1, '%'),
+    ...metric(kpi.cycle_count, 'TOTAL CYCLES\nLAST 30 DAYS', 0, '', ink),
+    ...metric(kpi.utilization_pct, 'AVG UTILIZATION\nLAST 30 DAYS', 1, '%', blue),
+    ...metric(measured(kpi.downtime_seconds) ? kpi.downtime_seconds / 3600 : undefined, 'DOWNTIME\nHOURS', 1, ' h', red),
+    ...(report.severity !== 'Unknown' ? [{ value: report.severity.toUpperCase(), label: ['High', 'Critical'].includes(report.severity) ? 'PRIORITY\nREVIEW REQUIRED' : 'ADVISORY\nSEVERITY', color: concernColor(report.severity), severity: true }] : []),
+  ] : [
     ...metric(todayAvailable ? kpi.today_availability_pct : kpi.availability_pct, todayAvailable ? "TODAY'S\nAVAILABILITY" : '30-DAY\nAVAILABILITY', 1, '%'),
     ...metric(kpi.today_interruptions, 'INTERRUPTIONS\nTODAY', 0, '', red),
     ...metric(kpi.interruptions, 'INTERRUPTIONS\nLAST 30 DAYS', 0, '', ink),
@@ -134,7 +148,7 @@ export async function createCompressorReportPdf(result: ReportResponse, options:
     doc.setDrawColor(...border); doc.setLineWidth(0.2); doc.line(margin, 16, width - margin, 16);
     doc.setDrawColor(...slate); doc.line(margin, 282, width - margin, 282);
     doc.setFontSize(6.2); doc.setTextColor(...ink);
-    doc.text(`Texmaco Rail & Engineering Ltd.  |  ${asset} Health Advisory  |  ${date}`, margin, 287);
+    doc.text(`Texmaco Rail & Engineering Ltd.  |  ${isRobo ? 'Robot welder' : asset} Health Advisory  |  ${date}`, margin, 287);
     doc.setTextColor(...red); doc.text(options.sample ? 'SAMPLE DATA / LAYOUT PREVIEW ONLY' : 'CONFIDENTIAL / INTERNAL USE ONLY', margin, 291);
     doc.setTextColor(...muted); doc.setFont('helvetica', 'normal');
     doc.text(`Page ${page} / ${pages}`, width - margin, 290, { align: 'right' });

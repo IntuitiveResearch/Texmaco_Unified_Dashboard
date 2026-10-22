@@ -207,7 +207,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Section: Intuitive AI (Management only), Asset, Date, Refresh, User */}
         <div className="flex items-center gap-2 sm:gap-2.5 ml-auto flex-wrap justify-end">
           {/* Intuitive AI Button - ONLY FOR MANAGEMENT */}
-          {currentTab === 'management' && ['CMP#01', 'CMP#02'].includes(selectedAsset) && (
+          {currentTab === 'management' && (
+            ['CMP#01', 'CMP#02', 'CNC#01', 'ROBO#01'].includes(selectedAsset) ||
+            selectedAsset.includes('TXMCNCI') ||
+            selectedAsset.includes('TXMMIGI')
+          ) && (
             <button
               type="button"
               id="btn-intuitive-ai"

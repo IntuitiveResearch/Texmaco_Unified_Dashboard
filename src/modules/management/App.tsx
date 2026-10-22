@@ -445,7 +445,9 @@ export default function App() {
                 <span>Loading...</span>
               </div>
             )}
-            {['CMP#01', 'CMP#02'].includes(compressor) && <button
+            {(['CMP#01', 'CMP#02', CNC_ASSET_LABEL, ROBO_ASSET_LABEL].includes(compressor) ||
+              compressor.includes('TXMCNCI') ||
+              compressor.includes('TXMMIGI')) && <button
               onClick={() => setShowReportModal(true)}
               className="flex items-center gap-1.5 bg-[var(--cyan)] text-white px-3 py-1.5 rounded-lg text-[12px] font-semibold hover:bg-[color-mix(in_srgb,var(--cyan)_80%,black)] transition-colors shadow-sm"
             >
