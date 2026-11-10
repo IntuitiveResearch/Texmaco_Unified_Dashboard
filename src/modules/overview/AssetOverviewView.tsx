@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, ChevronRight, Clock3, IndianRupee, Leaf, Radio } from 'lucide-react';
 import type { AssetStatus } from '../../utils/assetStatus';
-import { getAssetStatusAppearance } from '../../utils/assetStatus';
+import { getCompressorStatusAppearance } from '../../utils/assetStatus';
 import { fetchOperationalKpi } from '../om/services/kpiService';
 import { fetchWeldingData } from '../om/services/weldingService';
 import { getRangeDates } from '../om/utils/dateUtils';
@@ -136,7 +136,7 @@ function AssetOverviewCard({ card, values, status, loading, onOpenAsset }: {
   const connected = !card.mock;
   const clickable = connected || card.id === 'CRANE#01' || card.id === MIG_ASSET_ID;
   const hasMeasurements = values.availability !== null || values.utilization !== null || values.health !== null;
-  const appearance = getAssetStatusAppearance(status);
+  const appearance = getCompressorStatusAppearance(status, card.id);
   const healthColor = values.health !== null && values.health < 70 ? '#f43f5e' : values.health !== null && values.health < 80 ? '#f4b414' : '#16c89b';
   const trendColor = status === 'Stopped' || status === 'Offline' ? '#ed3855' : status === 'Idle' ? '#eeae1d' : '#18bf93';
   return (

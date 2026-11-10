@@ -39,3 +39,14 @@ export function getAssetStatusAppearance(status?: string) {
   }
 }
 
+export function getCompressorStatusAppearance(status: string | undefined, assetId: string) {
+  const appearance = getAssetStatusAppearance(status);
+  if (assetId !== 'CMP#01' && assetId !== 'CMP01' && assetId !== 'CMP#02' && assetId !== 'CMP02') {
+    return appearance;
+  }
+  return {
+    ...appearance,
+    label: appearance.label === 'Online' ? 'Running' : appearance.label === 'Offline' ? 'Stop' : appearance.label,
+  };
+}
+

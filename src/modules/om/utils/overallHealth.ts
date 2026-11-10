@@ -1,7 +1,22 @@
 import type { KpiMetrics, LatestTelemetry } from '../types';
 import { MIG_ASSET_ID, MIG_ASSET_TAG, MIG_HEALTH_SCORES } from '../data/migSample';
 
-export const COMPRESSOR_1_OVERALL_HEALTH = 56;
+export const COMPRESSOR_HEALTH_SCORES = {
+  'CMP#01': { overall: 86, electrical: 88, mechanical: 74, thermal: 82, power: 90 },
+  'CMP#02': { overall: 68, electrical: 77, mechanical: 62, thermal: 74, power: 88 },
+} as const;
+
+export const COMPRESSOR_1_OVERALL_HEALTH = COMPRESSOR_HEALTH_SCORES['CMP#01'].overall;
+
+export function getCompressorHealthScores(assetId?: string) {
+  if (assetId === 'CMP#01' || assetId === 'CMP01' || assetId === '01' || assetId === 'Compressor 1') {
+    return COMPRESSOR_HEALTH_SCORES['CMP#01'];
+  }
+  if (assetId === 'CMP#02' || assetId === 'CMP02' || assetId === '02' || assetId === 'Compressor 2') {
+    return COMPRESSOR_HEALTH_SCORES['CMP#02'];
+  }
+  return undefined;
+}
 
 export const ROBO_HEALTH_SCORES = {
   electrical: 88,
@@ -34,6 +49,7 @@ export function getOverallHealthScore(latest: LatestTelemetry, kpis?: KpiMetrics
 
 export function getDisplayedOverallHealth(latest: LatestTelemetry, kpis?: KpiMetrics, assetId?: string): number {
   if (assetId === MIG_ASSET_ID || assetId === MIG_ASSET_TAG) return MIG_HEALTH_SCORES.overall;
-  if (assetId === 'CMP#01' || assetId === 'CMP01') return COMPRESSOR_1_OVERALL_HEALTH;
+  const compressorScores = getCompressorHealthScores(assetId);
+  if (compressorScores) return compressorScores.overall;
   return getOverallHealthScore(latest, kpis) || 82;
 }

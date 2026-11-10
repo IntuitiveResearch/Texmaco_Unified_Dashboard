@@ -44,8 +44,8 @@
 .overview-status > span, .overview-status-online > span { width: 9px; height: 9px; border-radius: 50%; background: #0de5af; }
 .overview-status-idle { background: rgba(178, 125, 0, .94); }
 .overview-status-idle > span { background: #ffc227; }
-.overview-status-stopped, .overview-status-offline { background: rgba(181, 32, 56, .95); }
-.overview-status-stopped > span, .overview-status-offline > span { background: #ff3d5b; }
+.overview-status-stopped, .overview-status-offline, .overview-status-stop { background: rgba(181, 32, 56, .95); }
+.overview-status-stopped > span, .overview-status-offline > span, .overview-status-stop > span { background: #ff3d5b; }
 .overview-status-unknown { background: rgba(74, 86, 106, .95); }
 .overview-status-unknown > span { background: #c7d0da; }
 .overview-radio { position: absolute; right: 10px; top: 10px; z-index: 1; box-sizing: content-box; padding: 5px; border-radius: 50%; background: rgba(5, 22, 46, .8); color: white; }

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, RefreshCw, Check, Bell, LogOut, Calendar, Bot, Sun, Moon } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { DashboardTab } from './Sidebar';
-import { getAssetStatusAppearance } from '../utils/assetStatus';
+import { getCompressorStatusAppearance } from '../utils/assetStatus';
 
 export interface HeaderAsset {
   id: string;
@@ -12,7 +12,7 @@ export interface HeaderAsset {
 }
 
 function AssetStatusDot({ asset }: { asset: HeaderAsset }) {
-  const appearance = getAssetStatusAppearance(asset.status);
+  const appearance = getCompressorStatusAppearance(asset.status, asset.id);
   return <span className={`w-2 h-2 rounded-full shrink-0 ${appearance.dotClass}`} role="img" aria-label={`${asset.name}: ${appearance.label}`} title={appearance.label} data-asset-status={appearance.label} />;
 }
 

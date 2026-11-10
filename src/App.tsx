@@ -207,6 +207,7 @@ export default function App() {
   };
 
   const handleSelectTab = (tab: DashboardTab) => {
+    if (tab !== 'management') setIsReportModalOpen(false);
     if ((tab === 'management' || tab === 'finance') && (selectedAsset === 'CRANE#01' || selectedAsset === MIG_ASSET_ID)) {
       setSelectedAsset('CMP#02');
     }

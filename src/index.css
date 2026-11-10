@@ -371,7 +371,8 @@ html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
   color: var(--text);
 }
 
-.management-root.light {
+.management-root.light,
+.report-modal-theme {
   --bg: #F8FAFC;
   --bg2: #FFFFFF;
   --panel: #FFFFFF;
@@ -387,6 +388,9 @@ html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
   --chip: #F1F5F9;
   --hover: rgba(15, 23, 42, 0.04);
   --shadow: rgba(15, 23, 42, 0.05);
-  background-color: var(--bg);
   color: var(--text);
+}
+
+.management-root.light {
+  background-color: var(--bg);
 }

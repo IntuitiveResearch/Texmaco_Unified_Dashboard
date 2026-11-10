@@ -3,7 +3,7 @@ import { MapPin, Tag, RefreshCw, Clock, Building2, Maximize2 } from 'lucide-reac
 import { getCompressorImage, getAssetDisplayName } from '../utils/assetImages';
 import { AssetMeta } from '../types';
 import { COMPRESSOR_MODEL } from '../../../../shared/compressor-equipment.mjs';
-import { getAssetStatusAppearance, getOperatingStatus, type AssetStatus } from '../../../utils/assetStatus';
+import { getCompressorStatusAppearance, getOperatingStatus, type AssetStatus } from '../../../utils/assetStatus';
 import { MIG_ASSET_ID, MIG_ASSET_TAG } from '../data/migSample';
 
 interface MachineHeaderCardProps {
@@ -38,7 +38,8 @@ export const MachineHeaderCard: React.FC<MachineHeaderCardProps> = ({
   className = '',
 }) => {
   const imageUrl = getCompressorImage(compressorId);
-  const status = getAssetStatusAppearance(operatingStatus ?? getOperatingStatus(runState, loadState, compressorId));
+  const resolvedStatus = operatingStatus ?? getOperatingStatus(runState, loadState, compressorId);
+  const status = getCompressorStatusAppearance(resolvedStatus, assetMeta?.id ?? compressorId);
   const displayName = getAssetDisplayName(compressorId);
   const isMig = compressorId === MIG_ASSET_ID || compressorId === MIG_ASSET_TAG;
   const isRobo =

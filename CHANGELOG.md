@@ -2,6 +2,20 @@
 
 This file records changes to the Texmaco Unified Dashboard in plain language. For earlier merge analysis, see [MERGE_HANDOFF.md](MERGE_HANDOFF.md).
 
+## 2026-11-10 — Compressor health scores, Running/Stop statuses & modal refinements
+
+### O&M and Asset Health
+- Added explicit health scoring profiles for Compressors (`CMP#01`: 86 overall, 88 electrical, 74 mechanical, 82 thermal, 90 power; `CMP#02`: 68 overall, 77 electrical, 62 mechanical, 74 thermal, 88 power).
+- Updated O&M `HealthGauges` to evaluate individual subsystem health gauges (electrical, mechanical, thermal, power) using compressor health scores.
+- Refined status labels for Compressor assets (`CMP#01` and `CMP#02`) to display **Running** (instead of Online) and **Stop** (instead of Offline) across header status indicators, machine header cards, and plant overview cards.
+- Added badge styling for `.overview-status-stop`.
+
+### Navigation & UI
+- Added `.report-modal-theme` light-mode styling for the generative AI report dialog.
+- Automatically dismiss the report modal when navigating away from the Management dashboard.
+- Extended report API handler and type definitions to accept `assetId` as an alias for `compressor`/`asset`.
+- Added `.env.example` to `.gitignore`.
+
 ## 2026-10-22 — Generative RCA reports enabled for all four assets
 
 ### Intuitive AI reports

@@ -27,7 +27,7 @@ export default async function handler(req: IncomingMessage & { body?: unknown },
       if (Buffer.byteLength(body) > 65536) throw new ReportError('Request is too large.', 413);
       try { body = JSON.parse(body); } catch { throw new ReportError('Invalid JSON request.', 400); }
     }
-    const targetAsset = (body as any)?.compressor || (body as any)?.asset;
+    const targetAsset = (body as any)?.compressor || (body as any)?.asset || (body as any)?.assetId;
     if (!targetAsset || typeof targetAsset !== 'string') throw new ReportError('A compressor or asset ID is required.', 400);
 
     const startDate = (body as any)?.start_date || (body as any)?.startDate;

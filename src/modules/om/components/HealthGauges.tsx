@@ -1,7 +1,7 @@
 import React from 'react';
 import { Activity, Zap, Eye, AlertOctagon, Gauge, type LucideIcon } from 'lucide-react';
 import { LatestTelemetry, KpiMetrics } from '../types';
-import { getDisplayedOverallHealth } from '../utils/overallHealth';
+import { getCompressorHealthScores, getDisplayedOverallHealth } from '../utils/overallHealth';
 
 interface HealthGaugesProps {
   latest: LatestTelemetry;
@@ -91,10 +91,11 @@ export const HealthGauges: React.FC<HealthGaugesProps> = ({
   className = '',
   renderGauge,
 }) => {
-  const currentScore = latest.current?.health_score ?? 78;
-  const vibScore = latest.motioniq?.health_score ?? 62;
-  const tempScore = latest.temperature?.health_score ?? 38;
-  const mfmScore = latest.mfm?.health_score ?? 70;
+  const compressorScores = getCompressorHealthScores(assetId);
+  const currentScore = compressorScores?.electrical ?? latest.current?.health_score ?? 78;
+  const vibScore = compressorScores?.mechanical ?? latest.motioniq?.health_score ?? 62;
+  const tempScore = compressorScores?.thermal ?? latest.temperature?.health_score ?? 38;
+  const mfmScore = compressorScores?.power ?? latest.mfm?.health_score ?? 70;
   const opScore = latest.kpi?.availability_pct ?? kpis?.availability ?? 82;
 
   const overallScore = getDisplayedOverallHealth(latest, kpis, assetId);
