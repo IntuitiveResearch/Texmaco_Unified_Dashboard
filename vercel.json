@@ -1,18 +1,7 @@
-
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/analyze-report.ts": {
-      "maxDuration": 150
-    }
+    "api/analyze-report.ts": { "maxDuration": 150 }
   },
-  "redirects": [
-    {
-      "source": "/:path*",
-      "destination": "https://intuitive-intelligence-texmaco.vercel.app/:path*",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/dashboard",
